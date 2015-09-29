@@ -1,0 +1,334 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="TransparentActivation"></a><br>
+<a name="outline197"></a><br><h1>10. Transparent Activation</h1><br>
+Let's take a second look at the concept of Activation. We have seen how&nbsp;db4o uses a "depth" concept by default to activate objects&nbsp;to a specific depth when they are returned from a query.<br>
+<br>
+Wouldn't it be a lot nicer, if an application would never have&nbsp;to worry about activating objects and if db4o could handle things&nbsp;transparently for us? This is what Transparent Activation was&nbsp;developed for.<br>
+<br>
+<ul>
+<a name="outline198"></a><br><h2>10.1. The Activation Problem</h2><br>
+We can reuse most of the code from the <a href="Deep.html#Deep">Deep Graphs chapter</a>&nbsp;and&nbsp;get it to work with Transparent Activation.<br>
+<br>
+As a first step we should fill up our database with Car, Pilot and SensorReadout&nbsp;objects, so we have some objects to work with.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// storeCarAndSnapshots<br>
+Pilot pilot = new Pilot("Kimi Raikkonen", 110);<br>
+Car car = new Car("Ferrari");<br>
+car.Pilot = pilot;<br>
+for (int i = 0; i &lt; 5; i++)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;car.snapshot();<br>
+}<br>
+db.Store(car);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter8.TransparentActivationExample", "storeCarAndSnapshots")' /></td></tr></table>
+<br>
+<br>
+If we now rerun the code to traverse all cars and their sensor readings,&nbsp;we are again confronted with the same problem that we had before, we end&nbsp;up with some leaves of our object graph being null.&nbsp;&nbsp;<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveSnapshotsSequentially<br>
+IObjectSet result = db.QueryByExample(typeof (Car));<br>
+Car car = (Car) result.Next();<br>
+SensorReadout readout = car.History;<br>
+while (readout != null)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(readout);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;readout = readout.Next;<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter8.TransparentActivationExample", "retrieveSnapshotsSequentially")' /></td></tr></table>
+<br>
+<br>
+<a name="outline199"></a><br><h2>10.2. Turning On Transparent Activation</h2><br>
+Let's configure db4o to run in Transparent Activation mode and let's try again:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveSnapshotsSequentiallyTA<br>
+IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();<br>
+config.Common.Add(new TransparentActivationSupport());<br>
+using(IObjectContainer db = Db4oEmbedded.OpenFile(config, YapFileName))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof(Car));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SensorReadout readout = car.History;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;while (readout != null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(readout);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readout = readout.Next;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter8.TransparentActivationExample", "retrieveSnapshotsSequentiallyTA")' /></td></tr></table>
+<br>
+<br>
+Wow it worked! Is it really that easy? Principally yes. When db4o is run in&nbsp;Transparent Activation mode there are no surprises with null members that&nbsp;have not yet been read from the database. <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<a name="outline200"></a><br><h2>10.3. Implementing IActivatable</h2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<br>
+When Transparent Activation is turned on, all objects that do not implement&nbsp;the Db4objects.Db4o.TA.IActivatable interface will&nbsp;be fully activated when they are used. <br>
+<br>
+Although we wont get any surprises with null objects when we work in this mode,&nbsp;access to the root of a deep graph may load the entire graph into memory and that&nbsp;can take a long time and use a lot of memory.<br>
+<br>
+To prevent immediate activation of a class you can implement the&nbsp;IActivatable &nbsp;interface. Whenever db4o comes across&nbsp;an Activatable object while activating a graph of objects it will stop&nbsp;traversing the graph any deeper. db4o will "know" that it can activate&nbsp;Activatable objects on demand, so there is no reason to continue activation&nbsp;until these objects are really needed. <br>
+<br>
+For demonstration purposes we have made all classes used in this example&nbsp;Activatable and we have also added all the code required to activate&nbsp;by hand.<br>
+<br>
+Let's take a look at the Activatable version of our Car class:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.Activation;<br>
+using Db4objects.Db4o.TA;<br>
+namespace Db4odoc.Tutorial.F1.Chapter8<br>
+{<br>
+public class Car : IActivatable <br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private readonly String _model;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private Pilot _pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private SensorReadout _history;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[Transient]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private IActivator _activator;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public Car(String model) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this._model=model;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this._pilot=null;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this._history=null;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public Pilot Pilot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Read);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return _pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Write);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this._pilot = value;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public Pilot PilotWithoutActivation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get { return _pilot; }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public String Model<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Read);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return _model;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public SensorReadout History<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Read);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return _history;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public void snapshot() <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AppendToHistory(new TemperatureSensorReadout(DateTime.Now,this,"oil", PollOilTemperature()));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AppendToHistory(new TemperatureSensorReadout(DateTime.Now, this, "water", PollWaterTemperature()));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AppendToHistory(new PressureSensorReadout(DateTime.Now, this, "oil", PollOilPressure()));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;protected double PollOilTemperature() <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0.1* CountHistoryElements();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;protected double PollWaterTemperature() <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0.2* CountHistoryElements();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;protected double PollOilPressure() <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0.3* CountHistoryElements();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public override String ToString() <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Read);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return string.Format("{0}[{1}]/{2}", _model, _pilot, CountHistoryElements());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private int CountHistoryElements() <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Read);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return (_history==null ? 0 : _history.CountElements());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private void AppendToHistory(SensorReadout readout) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activate(ActivationPurpose.Write);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(_history==null) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_history=readout;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_history.Append(readout);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public void Activate(ActivationPurpose purpose) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(_activator != null) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_activator.Activate(purpose);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public void Bind(IActivator activator) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (_activator == activator)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (activator != null &amp;&amp; null != _activator)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw new System.InvalidOperationException();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_activator = activator;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+Can you spot the member _activator, all the #&nbsp;Activate() calls and the two&nbsp;methods #&nbsp;Activate() and #&nbsp;Bind(&nbsp;IActivator) at the end?<br>
+<br>
+An Activatable class should store the Activator that db4o provides to the&nbsp;bind method in a transient variable and call #&nbsp;Activate() on this Activator&nbsp;before any field is accessed.<br>
+<br>
+If the object is already activated, the method will return immediately.&nbsp;If it is not, activation will happen at this time.<br>
+<br>
+We have added the PilotWithoutActivation property&nbsp;to the Car class&nbsp;to be able to demonstrate.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// demonstrateTransparentActivation<br>
+IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();<br>
+config.Common.Add(new TransparentActivationSupport());<br>
+using(IObjectContainer db = Db4oEmbedded.OpenFile(config, YapFileName)){<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof (Car));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("#PilotWithoutActivation before the car is activated");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(car.PilotWithoutActivation);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("accessing 'Pilot' property activates the car object");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(car.Pilot);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Accessing PilotWithoutActivation property after the car is activated");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(car.PilotWithoutActivation);<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter8.TransparentActivationExample", "demonstrateTransparentActivation")' /></td></tr></table>
+<br>
+<br>
+<a name="outline201"></a><br><h2>10.4. Where Enhancement can help</h2><br>
+If all this Activatable code in a persistent class looked like a lot of&nbsp;typing work, do not worry: db4o comes with a tool to add this code&nbsp;automatically to all of your persistent classes. Read more about it in the&nbsp;chapter on <a href="Enhancement.html#Enhancement">Enhancement</a>&nbsp;.&nbsp;&nbsp;<br>
+<br>
+As a final step we should clean up the database again.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// deleteAll<br>
+IObjectSet result = db.QueryByExample(typeof(Object));<br>
+foreach (object item in result)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(item);<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.Util", "deleteAll")' /></td></tr></table>
+<br>
+<br>
+<a name="outline202"></a><br><h2>10.5. Conclusion</h2><br>
+This was just a short introduction to Transparent Activation and&nbsp;what it can do for you. For more detailed information please see&nbsp;the pages on Transparent Activation in our <a href="http://developer.db4o.com/Documentation.aspx" target="_blank">online reference</a>&nbsp;&nbsp;or in&nbsp;your offline copy of the Reference documentation.<br>
+<br>
+<a name="outline203"></a><br><h2>10.6. Full source</h2><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using System.IO;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.Config;<br>
+using Db4objects.Db4o.TA;<br>
+using Db4odoc.Tutorial.F1;<br>
+namespace Db4odoc.Tutorial.F1.Chapter8<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class TransparentActivationExample : Util<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string YapFileName = Path.Combine(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"formula1.yap");&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(String[] args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File.Delete(YapFileName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StoreCarAndSnapshots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveSnapshotsSequentially(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveSnapshotsSequentiallyTA();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DemonstrateTransparentActivation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void StoreCarAndSnapshots(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("Kimi Raikkonen", 110);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = new Car("Ferrari");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (int i = 0; i &lt; 5; i++)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.snapshot();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveSnapshotsSequentially(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof (Car));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SensorReadout readout = car.History;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while (readout != null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(readout);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readout = readout.Next;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveSnapshotsSequentiallyTA()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.Common.Add(new TransparentActivationSupport());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(config, YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof(Car));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SensorReadout readout = car.History;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while (readout != null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(readout);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readout = readout.Next;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DemonstrateTransparentActivation()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.Common.Add(new TransparentActivationSupport());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(config, YapFileName)){<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof (Car));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("#PilotWithoutActivation before the car is activated");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(car.PilotWithoutActivation);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("accessing 'Pilot' property activates the car object");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(car.Pilot);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Accessing PilotWithoutActivation property after the car is activated");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(car.PilotWithoutActivation);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

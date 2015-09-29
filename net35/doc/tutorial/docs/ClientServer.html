@@ -1,0 +1,631 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="ClientServer"></a><br>
+<a name="outline209"></a><br><h1>12. Client/Server</h1><br>
+Now that we have seen how transactions work in db4o conceptually, we&nbsp;are prepared to tackle concurrently executing transactions.<br>
+<br>
+We start by preparing our database in the familiar way.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// setFirstCar<br>
+Pilot pilot = new Pilot("Rubens Barrichello", 99);<br>
+Car car = new Car("BMW");<br>
+car.Pilot = pilot;<br>
+db.Store(car);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "setFirstCar")' /></td></tr></table>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// setSecondCar<br>
+Pilot pilot = new Pilot("Michael Schumacher", 100);<br>
+Car car = new Car("Ferrari");<br>
+car.Pilot = pilot;<br>
+db.Store(car);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "setSecondCar")' /></td></tr></table>
+<br>
+<br>
+<ul>
+<a name="outline210"></a><br><h2>12.1. Embedded server</h2><br>
+From the API side, there's no real difference between transactions&nbsp;executing concurrently within the same runtime&nbsp;&nbsp;and transactions executed&nbsp;against a remote server. To use concurrent transactions within&nbsp;a single runtime&nbsp;, we just open a db4o server on our database file,&nbsp;directing it to run on port 0, thereby declaring that no networking&nbsp;will take place.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// accessLocalServer<br>
+using(IObjectServer server = Db4oClientServer.OpenServer(YapFileName, 0))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client = server.OpenClient())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Do something with this client, or open more clients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+Again, we will delegate opening and closing the server to our&nbsp;environment to focus on client interactions.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// queryLocalServer<br>
+using(IObjectContainer client = server.OpenClient())<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client.QueryByExample(new Car(null)));<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "queryLocalServer")' /></td></tr></table>
+<br>
+<br>
+The transaction level in db4o is <em>read committed</em>&nbsp;. However, each&nbsp;client container maintains its own weak reference cache of already known&nbsp;objects. To make all changes committed by other clients immediately, we&nbsp;have to explicitly refresh known objects from the server. We will delegate&nbsp;this task to a specialized version of our&nbsp;#ListResult() method.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>public static void ListRefreshedResult(IObjectContainer container, IObjectSet items, int depth)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(items.Count);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;foreach (object item in items)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;container.Ext().Refresh(item, depth);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(item);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// demonstrateLocalReadCommitted<br>
+using(IObjectContainer client1 =server.OpenClient(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client2 =server.OpenClient())<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("David Coulthard", 98);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car("BMW"));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Commit();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(typeof(Car)));&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListRefreshedResult(client2, client2.QueryByExample(typeof(Car)), 2);<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "demonstrateLocalReadCommitted")' /></td></tr></table>
+<br>
+<br>
+Simple rollbacks just work as you might expect now.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// demonstrateLocalRollback<br>
+using (IObjectContainer client1 = server.OpenClient(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client2 = server.OpenClient())<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car("BMW"));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = new Pilot("Someone else", 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Rollback();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Ext().Refresh(car, 2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "demonstrateLocalRollback")' /></td></tr></table>
+<br>
+<br>
+<a name="outline211"></a><br><h2>12.2. Networking</h2><br>
+From here it's only a small step towards operating db4o over a TCP/IP network.&nbsp;We just specify a port number greater than zero&nbsp;and set up one or more accounts for our client(s).<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// accessRemoteServer<br>
+using(IObjectServer server = Db4oClientServer.OpenServer(YapFileName, ServerPort))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server.GrantAccess(ServerUser, ServerPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client = Db4oClientServer.OpenClient("localhost", ServerPort, ServerUser, ServerPassword))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Do something with this client, or open more clients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+The client connects providing host, port, user name and password.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// queryRemoteServer<br>
+using(IObjectContainer client = Db4oClientServer.OpenClient("localhost", port, user, password))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client.QueryByExample(new Car(null)));<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "queryRemoteServer")' /></td></tr></table>
+<br>
+<br>
+Everything else is absolutely identical to the local server examples above.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// demonstrateRemoteReadCommitted<br>
+using(IObjectContainer client1 = Db4oClientServer.OpenClient("localhost", port, user, password),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client2 = Db4oClientServer.OpenClient("localhost", port, user, password))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("Jenson Button", 97);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car(null));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Commit();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "demonstrateRemoteReadCommitted")' /></td></tr></table>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// demonstrateRemoteRollback<br>
+using(IObjectContainer client1 =Db4oClientServer.OpenClient("localhost", port, user, password),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client2 =Db4oClientServer.OpenClient("localhost", port, user, password))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car(null));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = new Pilot("Someone else", 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Rollback();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client1.Ext().Refresh(car, 2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter6.ClientServerExample", "demonstrateRemoteRollback")' /></td></tr></table>
+<br>
+<br>
+<br>
+<br>
+<a name="outline212"></a><br><h2>12.3. Out-of-band signalling</h2><br>
+Sometimes a client needs to send a special message to a server in order&nbsp;to tell the server to do something.&nbsp;&nbsp;The server may need to be signalled&nbsp;to perform a defragment or it may need to be signalled to shut itself&nbsp;down gracefully.<br>
+<br>
+This is configured bysetting MessageRecipient parameter to the object that will process client-initiated messages.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>public void RunServer()<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lock(this)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IServerConfiguration config = Db4oClientServer.NewServerConfiguration();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Using the messaging functionality to redirect all<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// messages to this.processMessage<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.Networking.MessageRecipient = this;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectServer db4oServer = Db4oClientServer.OpenServer(config, FILE, PORT);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db4oServer.GrantAccess(USER, PASS);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (! stop)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// wait forever until Close will change stop variable<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Monitor.Wait(this);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;catch (Exception e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(e.ToString());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db4oServer.Close();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+The message is received and processed by a&nbsp;#ProcessMessage() method:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>public void ProcessMessage(IMessageContext con, object message)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (message is StopServer)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Close();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+Db4o allows a client to send an arbitrary signal or message to a server&nbsp;by sending a plain object to the server.&nbsp;&nbsp;The server will receive&nbsp;a callback message, including the object that came from the client.&nbsp;The server can interpret this message however it wants.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>public static void Main(string[] args)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;IObjectContainer IObjectContainer = null;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;try<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// connect to the server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectContainer = Db4oClientServer.OpenClient(Db4oClientServer.NewClientConfiguration(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HOST, PORT, USER, PASS);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;catch (Exception e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(e.ToString());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (IObjectContainer != null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// get the messageSender for the IObjectContainer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMessageSender messageSender = IObjectContainer.Ext()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Configure().ClientServer().GetMessageSender();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// send an instance of a StopServer object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messageSender.Send(new StopServer());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// close the IObjectContainer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectContainer.Close();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+<a name="outline213"></a><br><h2>12.4. Putting it all together: a simple but complete db4o server</h2><br>
+Let's put all of this information together now to implement a simple&nbsp;standalone db4o server with a special client that can tell the server&nbsp;to shut itself down gracefully on demand.<br>
+<br>
+First, both the client and the server need some shared configuration&nbsp;information.&nbsp;&nbsp;We will provide this using an interface:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>namespace Db4odoc.Tutorial.F1.Chapter6<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// Configuration used for StartServer and StopServer.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class ServerInfo<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// the host to be used.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// If you want to run the client server examples on two computers,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// enter the computer name of the one that you want to use as server. <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public const string HOST = "localhost";&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// the database file to be used by the server.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public const string FILE = "formula1.yap";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// the port to be used by the server.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public const int PORT = 4488;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// the user name for access control.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public const string USER = "db4o";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// the pasword for access control.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public const string PASS = "db4o";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+Now we'll create the server:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using System.Threading;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.CS;<br>
+using Db4objects.Db4o.CS.Config;<br>
+using Db4objects.Db4o.Messaging;<br>
+namespace Db4odoc.Tutorial.F1.Chapter6<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// starts a db4o server with the settings from ServerInfo.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// This is a typical setup for a long running server.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// The Server may be stopped from a remote location by running<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// StopServer. The StartServer instance is used as a MessageRecipient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// and reacts to receiving an instance of a StopServer object.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// Note that all user classes need to be present on the server side<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// and that all possible Db4oFactory.Configure() calls to alter the db4o<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// configuration need to be executed on the client and on the server.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class StartServer : ServerInfo, IMessageRecipient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// setting the value to true denotes that the server should be closed<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;private bool stop = false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// starts a db4o server using the configuration from<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// ServerInfo.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(string[] arguments)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new StartServer().RunServer();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// opens the IObjectServer, and waits forever until Close() is called<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// or a StopServer message is being received.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public void RunServer()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lock(this)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IServerConfiguration config = Db4oClientServer.NewServerConfiguration();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Using the messaging functionality to redirect all<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// messages to this.processMessage<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.Networking.MessageRecipient = this;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectServer db4oServer = Db4oClientServer.OpenServer(config, FILE, PORT);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db4oServer.GrantAccess(USER, PASS);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (! stop)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// wait forever until Close will change stop variable<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Monitor.Wait(this);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;catch (Exception e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(e.ToString());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db4oServer.Close();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// messaging callback<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// see com.db4o.messaging.MessageRecipient#ProcessMessage()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public void ProcessMessage(IMessageContext con, object message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (message is StopServer)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Close();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// closes this server.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public void Close()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lock(this)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop = true;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Monitor.PulseAll(this);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+And last but not least, the client that stops the server.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.CS;<br>
+using Db4objects.Db4o.Messaging;<br>
+namespace Db4odoc.Tutorial.F1.Chapter6<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// stops the db4o Server started with StartServer.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// This is done by opening a client connection<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// to the server and by sending a StopServer object as<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// a message. StartServer will react in it's<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// processMessage method.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class StopServer : ServerInfo<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// stops a db4o Server started with StartServer.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;/summary><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/// &lt;exception cref="Exception" /><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(string[] args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectContainer IObjectContainer = null;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// connect to the server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectContainer = Db4oClientServer.OpenClient(Db4oClientServer.NewClientConfiguration(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HOST, PORT, USER, PASS);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;catch (Exception e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(e.ToString());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (IObjectContainer != null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// get the messageSender for the IObjectContainer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMessageSender messageSender = IObjectContainer.Ext()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Configure().ClientServer().GetMessageSender();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// send an instance of a StopServer object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messageSender.Send(new StopServer());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// close the IObjectContainer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectContainer.Close();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+<a name="outline214"></a><br><h2>12.5. Conclusion</h2><br>
+That's it, folks. No, of course it isn't. There's much more to db4o&nbsp;we haven't covered yet: schema evolution, custom persistence for your classes,&nbsp;writing your own query objects, etc. A much more thorough documentation is&nbsp;provided in the reference that you should have also received with the&nbsp;download or <a href="http://developer.db4o.com/Documentation.aspx" target="_blank">online</a>.<br>
+<br>
+We hope that this tutorial has helped to get you started with db4o. How&nbsp;should you continue now?<br>
+<br>
+- Register on db4o developer <a href="http://www.db4o.com/Users/register.aspx" target="_blank">website</a>. <br>
+<br>
+- You could browse the remaining chapters. They are a selection of themes&nbsp;from the reference that very frequently come up as questions in&nbsp;our <a href="http://developer.db4o.com/Forums.aspx" target="_blank">http://developer.db4o.com/Forums.aspx</a>.<br>
+<br>
+-<em>(Interactive version only)</em>While this tutorial is basically sequential in&nbsp;nature, try to switch back and forth between the chapters and execute the&nbsp;sample snippets in arbitrary order. You will be working with the same&nbsp;database throughout; sometimes you may just get stuck or even induce&nbsp;exceptions, but you can always reset the database via the console window.<br>
+<br>
+- The examples we've worked through are included in your db4o distribution&nbsp;in full source code. Feel free to experiment with it.<br>
+<br>
+- If you're stuck, browse the information&nbsp;on our <a href="http://www.db4o.com/" target="_blank">web site</a>, check if your problem is submitted&nbsp;to <a href="http://tracker.db4o.com/" target="_blank">Jira</a>&nbsp;or visit our&nbsp;forums at <a href="http://developer.db4o.com/Forums.aspx" target="_blank">http://developer.db4o.com/Forums.aspx</a>.<br>
+<br>
+<br>
+<a name="outline215"></a><br><h2>12.6. Full source</h2><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using System.IO;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.CS;<br>
+using Db4objects.Db4o.CS.Config;<br>
+namespace Db4odoc.Tutorial.F1.Chapter6<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class ClientServerExample : Util<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string YapFileName = Path.Combine(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"formula1.yap");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static int ServerPort = 0xdb40;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string ServerUser = "user";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string ServerPassword = "password";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(string[] args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File.Delete(YapFileName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AccessLocalServer();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File.Delete(YapFileName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SetFirstCar(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SetSecondCar(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IServerConfiguration config = Db4oClientServer.NewServerConfiguration();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.Common.ObjectClass(typeof(Car)).UpdateDepth(3);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectServer server = Db4oClientServer.OpenServer(config,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;YapFileName, 0))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QueryLocalServer(server);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DemonstrateLocalReadCommitted(server);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DemonstrateLocalRollback(server);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AccessRemoteServer();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectServer server&nbsp;&nbsp;= Db4oClientServer.OpenServer(Db4oClientServer.NewServerConfiguration(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;YapFileName, ServerPort))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;server.GrantAccess(ServerUser, ServerPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QueryRemoteServer(ServerPort, ServerUser, ServerPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DemonstrateRemoteReadCommitted(ServerPort, ServerUser, ServerPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DemonstrateRemoteRollback(ServerPort, ServerUser, ServerPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void SetFirstCar(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("Rubens Barrichello", 99);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = new Car("BMW");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void SetSecondCar(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("Michael Schumacher", 100);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = new Car("Ferrari");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void AccessLocalServer()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectServer server = Db4oClientServer.OpenServer(YapFileName, 0))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client = server.OpenClient())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Do something with this client, or open more clients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void QueryLocalServer(IObjectServer server)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client = server.OpenClient())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DemonstrateLocalReadCommitted(IObjectServer server)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client1 =server.OpenClient(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client2 =server.OpenClient())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("David Coulthard", 98);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car("BMW"));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Commit();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(typeof(Car)));&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListRefreshedResult(client2, client2.QueryByExample(typeof(Car)), 2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DemonstrateLocalRollback(IObjectServer server)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using (IObjectContainer client1 = server.OpenClient(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client2 = server.OpenClient())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car("BMW"));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = new Pilot("Someone else", 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Rollback();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Ext().Refresh(car, 2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void AccessRemoteServer()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectServer server = Db4oClientServer.OpenServer(YapFileName, ServerPort))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;server.GrantAccess(ServerUser, ServerPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client = Db4oClientServer.OpenClient("localhost", ServerPort, ServerUser, ServerPassword))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Do something with this client, or open more clients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void QueryRemoteServer(int port, string user, string password)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client = Db4oClientServer.OpenClient("localhost", port, user, password))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DemonstrateRemoteReadCommitted(int port, string user, string password)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client1 = Db4oClientServer.OpenClient("localhost", port, user, password),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client2 = Db4oClientServer.OpenClient("localhost", port, user, password))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot = new Pilot("Jenson Button", 97);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car(null));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = pilot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Commit();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DemonstrateRemoteRollback(int port, string user, string password)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer client1 =Db4oClientServer.OpenClient("localhost", port, user, password),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client2 =Db4oClientServer.OpenClient("localhost", port, user, password))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = client1.QueryByExample(new Car(null));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Car car = (Car) result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;car.Pilot = new Pilot("Someone else", 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Store(car);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Rollback();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;client1.Ext().Refresh(car, 2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client1.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(client2.QueryByExample(new Car(null)));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

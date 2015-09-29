@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Advanced Features|Type Handling" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Delegates And Events</title>
+        <link href="../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../index_CSH.html#advanced_topics/type_handling/delegates_and_events.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../advanced_topics.htm">Advanced Features</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../type_handling.htm">Type Handling</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Delegates And Events</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>Delegates And Events</h1>
+        <p>
+            <p MadCap:conditions="Primary..NET">
+            </p>
+            <p>Db4o rules for delegate fields are very straightforward: <b>delegates are simply not stored.</b>  Events and delegates are generally used for binding user interface elements and domain models together. The Db4o team felt that not storing delegate fields by default was more appropriate than opening what could potentially be a very nasty can of worms (just think of a text box bound to a Customer.Changed event).  After careful thought we can easily add delegate persistence to our domain model by either installing translators for the delegate types of interest or reconnecting the necessary objects upon activation using callbacks.  For details see the specific chapters on <a href="translators.htm">Translators</a> and <a href="../callbacks.htm">Callbacks</a>.  </p>
+            <p MadCap:conditions="Global.Primary:net" />
+        </p>
+        <script src="../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

@@ -1,0 +1,6 @@
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMNTest.exe.config
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMNTest.exe
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMNTest.pdb
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMNTest\obj\Release\ResolveAssemblyReference.cache
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMNTest\obj\Release\OMNTest.exe
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMNTest\obj\Release\OMNTest.pdb

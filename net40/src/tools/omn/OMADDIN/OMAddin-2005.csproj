@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{564443D9-9690-44A5-805F-DD9CE7A0FBF4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>OMAddin</RootNamespace>
+    <AssemblyName>OMAddin</AssemblyName>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Connect.cs" />
+    <Compile Include="OutputWindow.cs" />
+    <Compile Include="Properties\Settings.Designer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CommandBar.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ContactSales\ContactSales.htm" />
+    <Content Include="ContactSales\ContactSales_files\filelist.xml" />
+    <Content Include="ContactSales\ContactSales_files\image001.jpg" />
+    <Content Include="ContactSales\ContactSales_files\image002.jpg" />
+    <Content Include="FAQ\FAQ.htm" />
+    <Content Include="FAQ\FAQ_files\filelist.xml" />
+    <Content Include="FAQ\FAQ_files\image001.gif" />
+    <Content Include="FAQ\FAQ_files\image002.gif" />
+    <EmbeddedResource Include="Images\DBconnect.gif" />
+    <EmbeddedResource Include="Images\DBconnect_Masked.bmp" />
+    <EmbeddedResource Include="Images\DB_DISCONNECT2_a.GIF" />
+    <EmbeddedResource Include="Images\DB_DISCONNECT2_b.BMP" />
+    <EmbeddedResource Include="Images\support1.gif" />
+    <EmbeddedResource Include="Images\support1_Masked.bmp" />
+    <EmbeddedResource Include="Images\SupportCases.gif" />
+    <EmbeddedResource Include="Images\SupportCases_Masked.bmp" />
+    <EmbeddedResource Include="Images\XtremeConnct_2.gif" />
+    <EmbeddedResource Include="Images\XtremeConnct_2_Masked.bmp" />
+    <Content Include="OMAddin.AddIn">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ReadMe\ReadMe.htm" />
+    <Content Include="ReadMe\ReadMe_files\colorschememapping.xml" />
+    <Content Include="ReadMe\ReadMe_files\filelist.xml" />
+    <Content Include="ReadMe\ReadMe_files\image001.jpg" />
+    <Content Include="ReadMe\XtremeConnct_2_Masked.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Properties\Settings.settings" />
+    <None Include="ReadMe\ReadMe_files\themedata.thmx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Extensibility, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LoggingBlock\LoggingBlock-2005.csproj">
+      <Project>{61BA5368-0C86-43FE-9F65-B37E10D187C3}</Project>
+      <Name>LoggingBlock-2005</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OM+\OMPlus-2005.csproj">
+      <Project>{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}</Project>
+      <Name>OMPlus-2005</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OmControlLibrary\OMControlLibrary-2005.csproj">
+      <Project>{56758956-B261-405F-9E79-66C97A7CE65D}</Project>
+      <Name>OMControlLibrary-2005</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="Microsoft.VisualStudio.CommandBars">
+      <Guid>{1CBA492E-7263-47BB-87FE-639000619B15}</Guid>
+      <VersionMajor>8</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <Private>True</Private>
+    </COMReference>
+    <COMReference Include="stdole">
+      <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+  </ItemGroup>
+</Project>

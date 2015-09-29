@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Platform Specific Issues|Web Environment" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>ASP.NET MVC Example</title>
+        <link href="../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../SkinSupport/MadCapAll.js">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../index_CSH.html#platform_specific_issues/web/asp.net_mvc_example.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../platform_specific_issues.htm">Platform Specific Issues</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../web_environment.htm">Web Environment</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">ASP.NET MVC Example</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>ASP.NET MVC Example</h1>
+        <p>This example is a tiny CRUD application which shows how to use db4o in <span class="MCPopup"><a href="javascript:void(0);" class="MCPopupSpot" onclick="FMCPopup( event, this ); return false;" MadCap:src="../asp.net.htm">ASP.NET<img style="border: none;margin-left: 5px;" src="../../SkinSupport/ExpandingClosed.gif" MadCap:altsrc="../../SkinSupport/ExpandingOpen.gif" class="MCExpandingIcon" onload="if ( typeof( FMCPreloadImage ) == 'function' ) { FMCPreloadImage( '../../SkinSupport/ExpandingOpen.gif' ); }" /></a></span> MVC 2.0.
+		<span MadCap:conditions="Primary.Online"> Download the <a href="../../CodeExamples/WebApp/Example-dotNetAppExamples-WebApp-csharp.zip">code here</a>. This example requires Visual Studio 2008 or new and ASP.NET MVC 2.0 installed. Unzip the project. Add the db4o-assemblies to the Lib-folder. Then open the project and run it.&#160;</span></p>
+        <h2>Managing Object Containers</h2>
+        <p>This example uses the code from the <a href="asp.net_request_example.htm">request-example</a> <![CDATA[ ]]>to create a object container for each request. On each new request a object container is opened. Then all operations are done on this container. When the request ends, the container is disposed.</p>
+        <h2>Object Identification</h2>
+        <p>This example uses a GUID for each object to identify it across requests. Persisted objects inherit from the IDHolder class which contains the id-field. Take a look at alternatives for ids. <a href="../disconnected_objects/comparison_of_ids.htm" target="" title="" alt="" class="MCXref" xrefformat="See &quot;{paratext}&quot;">See "Comparison Of Different IDs"</a></p>
+        <h2>Using db4o</h2>
+        <p>You can use db4o as expected. Just use the request-container:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span> ActionResult Index()
+{
+    IList&lt;Pilot&gt; allPilots = Db4oProvider.Database.Query&lt;Pilot&gt;();
+    <span style="color:Blue;">return</span> View(allPilots);
+}</pre>
+            <div class="codesnippet-meta">HomeController.cs: Listing all pilots on the index
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Controllers/Example-WebApp-Controllers-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <h2>Using IDs</h2>
+        <p>Now the ids can be used in the views and actions to identify objects. For example in a list-view you use the ids for the action-links:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">&lt;% foreach (var pilot in Model) { %&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;
+            &lt;%= Html.ActionLink("Edit", "Edit", new { id=pilot.ID }) %&gt; |
+            &lt;%= Html.ActionLink("Delete", "Delete", new { id = pilot.ID })%&gt;
+        &lt;/td&gt;
+        &lt;td&gt;
+            &lt;%= Html.Encode(pilot.Name) %&gt;
+        &lt;/td&gt;
+        &lt;td&gt;
+            &lt;%= Html.Encode(pilot.Points) %&gt;
+        &lt;/td&gt;
+    &lt;/tr&gt;
+
+&lt;% } %&gt;</pre>
+            <div class="codesnippet-meta">Index.aspx: In the view use the ids to identify the objects
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Views/Home/Example-Views-Home-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>Another location where the ids are used is in the actions. For example when you need to store changes. First we get a object which contains all changes. Then we copy all changes to the existing object in the database and finally store it. <a href="../disconnected_objects/merging_changes.htm" target="" title="" alt="" class="MCXref" xrefformat="See &quot;{paratext}&quot;">See "Merging Changes"</a></p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">[AcceptVerbs(HttpVerbs.Post)]
+<span style="color:Blue;">public</span> ActionResult Edit(Guid id, Pilot editedPilot)
+{
+    Pilot databasePilot = GetPilotById(id);
+    databasePilot.Name = editedPilot.Name;
+    databasePilot.Points = editedPilot.Points;
+    Db4oProvider.Database.Store(databasePilot);
+
+    <span style="color:Blue;">return</span> RedirectToAction(<span style="color:#A31515;">"Index"</span>);
+}</pre>
+            <div class="codesnippet-meta">HomeController.cs: update the object
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Controllers/Example-WebApp-Controllers-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>&#160;</p>
+        <script src="../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

@@ -1,0 +1,8 @@
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMPlus.dll
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMPlus.pdb
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OM+\obj\Release\ResolveAssemblyReference.cache
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OM+\obj\Release\OManager.Properties.Resource.resources
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OM+\obj\Release\GenerateResource.read.0.tlog
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OM+\obj\Release\GenerateResource.write.0.tlog
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OM+\obj\Release\OMPlus.dll
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OM+\obj\Release\OMPlus.pdb

@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Basics Operations &amp; Concepts|Transparent Activation/Persistence|Collections" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Enhance Collections</title>
+        <link href="../../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../../index_CSH.html#basics/transparentpersistence/collections/enhance_collections.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../../basics.htm">Basics Operations &amp; Concepts</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../../transparent_persistence.htm">Transparent Activation/Persistence</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../Collections.htm">Collections</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Enhance Collections</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>Enhance Collections</h1>
+        <p>You can use the normal <span class="PrimaryPlattform">.NET</span>-collections in your code and then replace the implementations with the enhancement-tools. <a href="../ta_enhanced_example.htm" target="" title="" alt="" class="MCXref">See "Transparent Persistence Enhancement Example"</a></p>
+        <p>The enhancement tools will search for instantiations of collections and replace it with an appropriate transparent activation aware collection. </p>
+        <div MadCap:conditions="Primary..NET">
+            <p>However this has some implications. The original collection classes are all sealed and not designed for extension. This means that a complete different implementation is used and that has its consequences.</p>
+            <h2>Can Be Enhanced: When Using Interfaces in Declaration</h2>
+            <p>The best case is when collection-interface is used, like IList instead of the concrete class. For example in a field-declaration like this:</p>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> CanBeEnhanced
+{
+    <span style="color:Blue;">private</span> IList&lt;<span style="color:Blue;">string</span>&gt; _names = <span style="color:Blue;">new</span> List&lt;<span style="color:Blue;">string</span>&gt;();
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">bool</span> ContainsName(<span style="color:Blue;">string</span> item)
+    {
+        <span style="color:Blue;">return</span> _names.Contains(item);
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">void</span> AddName(<span style="color:Blue;">string</span> item)
+    {
+        _names.Add(item);
+    }
+}</pre>
+                <div class="codesnippet-meta">EnhancementLimitations.cs: Can be enhanced by the db4o-tools
+			<div class="codedownload"><a href="../../../CodeExamples/ta/collectionEnhanceIssues/Example-ta-collectionEnhanceIssues-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Class</span> CanBeEnhanced
+    <span style="color:Blue;">Private</span> _names <span style="color:Blue;">As</span> IList(Of <span style="color:Blue;">String</span>) = <span style="color:Blue;">New</span> List(Of <span style="color:Blue;">String</span>)()
+
+    <span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span> ContainsName(<span style="color:Blue;">ByVal</span> item <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">String</span>) <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">Boolean</span>
+        <span style="color:Blue;">Return</span> _names.Contains(item)
+    <span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span>
+
+    <span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Sub</span> AddName(<span style="color:Blue;">ByVal</span> item <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">String</span>)
+        _names.Add(item)
+    <span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Sub</span>
+<span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Class</span></pre>
+                <div class="codesnippet-meta">EnhancementLimitations.vb: Can be enhanced by the db4o-tools
+			<div class="codedownload"><a href="../../../CodeExamples/ta/collectionEnhanceIssues/Example-ta-collectionEnhanceIssues-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <p>This kind of code is correctly translated by the enhancement tools to:</p>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> CanBeEnhanced
+{
+    <span style="color:Blue;">private</span> IList&lt;<span style="color:Blue;">string</span>&gt; _names = <span style="color:Blue;">new</span> ActivatableList&lt;<span style="color:Blue;">string</span>&gt;();
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">bool</span> ContainsName(<span style="color:Blue;">string</span> item)
+    {
+        <span style="color:Blue;">return</span> _names.Contains(item);
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">void</span> AddName(<span style="color:Blue;">string</span> item)
+    {
+        _names.Add(item);
+    }
+}</pre>
+                <div class="codesnippet-meta">EnhancementLimitations.cs: Is enhanced to
+			<div class="codedownload"><a href="../../../CodeExamples/ta/collectionEnhanceIssues/Example-ta-collectionEnhanceIssues-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Class</span> CanBeEnhanced
+    <span style="color:Blue;">Private</span> _names <span style="color:Blue;">As</span> IList(Of <span style="color:Blue;">String</span>) = <span style="color:Blue;">New</span> ActivatableList(Of <span style="color:Blue;">String</span>)()
+
+    <span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span> ContainsName(<span style="color:Blue;">ByVal</span> item <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">String</span>) <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">Boolean</span>
+        <span style="color:Blue;">Return</span> _names.Contains(item)
+    <span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span>
+
+    <span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Sub</span> AddName(<span style="color:Blue;">ByVal</span> item <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">String</span>)
+        _names.Add(item)
+    <span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Sub</span>
+<span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Class</span></pre>
+                <div class="codesnippet-meta">EnhancementLimitations.vb: Is enhanced to
+			<div class="codedownload"><a href="../../../CodeExamples/ta/collectionEnhanceIssues/Example-ta-collectionEnhanceIssues-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <h2>Cannot Be Enhanced: When Using Concrete Class  In Declaration</h2>
+            <p>When you use the concrete types in field declarations, the enhancer-tools will produce a warning and doesn't change the implementation. The example below cannot be enhanced, because it uses the concrete type.</p>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> CannotBeEnhanced
+{
+    <span style="color:Green;">// cannot be enhanced, because it uses the concrete type</span>
+    <span style="color:Blue;">private</span> List&lt;<span style="color:Blue;">string</span>&gt; _names = <span style="color:Blue;">new</span> List&lt;<span style="color:Blue;">string</span>&gt;();
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">bool</span> ContainsName(<span style="color:Blue;">string</span> item)
+    {
+        <span style="color:Blue;">return</span> _names.Contains(item);
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">void</span> AddName(<span style="color:Blue;">string</span> item)
+    {
+        _names.Add(item);
+    }
+}</pre>
+                <div class="codesnippet-meta">EnhancementLimitations.cs: Cannot be enhanced by the db4o-tools
+			<div class="codedownload"><a href="../../../CodeExamples/ta/collectionEnhanceIssues/Example-ta-collectionEnhanceIssues-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Class</span> CannotBeEnhanced
+    <span style="color:Green;">' cannot be enhanced, because it uses the concrete type</span>
+    <span style="color:Blue;">Private</span> _names <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">New</span> List(Of <span style="color:Blue;">String</span>)()
+
+    <span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span> ContainsName(<span style="color:Blue;">ByVal</span> item <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">String</span>) <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">Boolean</span>
+        <span style="color:Blue;">Return</span> _names.Contains(item)
+    <span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span>
+
+    <span style="color:Blue;">Public</span>  <![CDATA[ ]]><span style="color:Blue;">Sub</span> AddName(<span style="color:Blue;">ByVal</span> item <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">String</span>)
+        _names.Add(item)
+    <span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Sub</span>
+<span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Class</span></pre>
+                <div class="codesnippet-meta">EnhancementLimitations.vb: Cannot be enhanced by the db4o-tools
+			<div class="codedownload"><a href="../../../CodeExamples/ta/collectionEnhanceIssues/Example-ta-collectionEnhanceIssues-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <h2>Casts are dangerous</h2>
+            <p>The enhancement tools replace the implementation of collections. When you code has an assumptions about the concrete types and tries to cast, it may fail. In general try to avoid casting to concrete types and use interfaces instead.</p>
+        </div>
+        <script src="../../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

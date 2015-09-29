@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Community|Working With Source Code" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Using The Sources From db4o Distribution</title>
+        <link href="../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../index_CSH.html#community/working_with_source/using_the_sources_from_db4o_distribution.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../community.htm">Community</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../working_with_source_code.htm">Working With Source Code</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Using The Sources From db4o Distribution</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1><a name="kanchor131"></a>Using The Sources From db4o Distribution</h1>
+        <p MadCap:conditions="Primary..NET">The sources for db4o are in the 'src' subdirectory of the db4o distribution. In that directory is a selection of solution-files appropriate for different versions of db4o. Open the appropriate solution file to view, edit and compile the sources.</p>
+        <p MadCap:conditions="Primary..NET">Note that big parts of the .NET source-code are generated from the Java source code. The translated code is harder to read and not intended to be changed.</p>
+        <p MadCap:conditions="Primary..NET">Following projects are shipped with db4o:</p>
+        <ul MadCap:conditions="Primary..NET">
+            <li value="1">Db4objects.Db4o: The db4o core.</li>
+            <li value="2">Db4objects.Db4o.CFCompatibilityTests: Special tests for the compact framework.</li>
+            <li value="3">Db4objects.Db4o.CS:&#160;The db4o client server mode.</li>
+            <li value="4">Db4objects.Db4o.CS.Optional:&#160;Optional features for the client server mode.</li>
+            <li value="5">Db4objects.Db4o.Data.Services: db4o integration into the WCF data services.</li>
+            <li value="6">Db4objects.Db4o.Data.Services.Tests: Test suite for the WCF&#160;data services integration.</li>
+            <li value="7">Db4objects.Db4o.Instrumentation: The instrumentation code used for code enhancer and native queries.</li>
+            <li value="8">Db4objects.Db4o.Linq: The db4o LINQ provider.</li>
+            <li value="9">Db4objects.Db4o.Linq.Tests, Db4objects.Db4o.Linq.VB.Tests, Db4objects.Db4o.Linq.Instrumentation.Tests: The test suite for the LINQ provider.</li>
+            <li value="10">Db4objects.Db4o.NativeQueries:&#160;The native query implementation.</li>
+            <li value="11">Db4objects.Db4o.Optional: Optional features for db4o.</li>
+            <li value="12">Db4objects.Db4o.Silverlight.TestStart, Db4objects.Db4o.SilverlightTestHost: Part of the Silverlight test suite.</li>
+            <li value="13">Db4objects.Db4o.Tests: The db4o test suite.</li>
+            <li value="14">Db4oTool: The db4o tool source code.</li>
+            <li value="15">Db4oTutorial: The db4o tutorial.</li>
+            <li value="16">Db4oUnit: The db4o unit test framework.</li>
+            <li value="17">Db4oUnit.Extensions: Utilities and extensions for the db4o unit framework.</li>
+        </ul>
+        <script src="../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

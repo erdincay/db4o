@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="First"></a><br>
+<a name="outline128"></a><br><h1>2. First Steps</h1><br>
+Let's get started as simple as possible. We are going to demonstrate how to store,&nbsp;retrieve, update and delete instances&nbsp;of a single class that only contains primitive and String members. In our example&nbsp;this will be a Formula One (F1) pilot whose attributes are his name and the F1 points&nbsp;he has already gained this season.<br>
+<br>
+First we create a class to hold our data. It looks like this:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class Pilot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string _name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int _points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public Pilot(string name, int points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_name = name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_points = points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public string Name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return _name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public int Points<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return _points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public void AddPoints(int points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_points += points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;override public string ToString()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return string.Format("{0}/{1}", _name, _points);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+Notice that this class does not contain any db4o-related code.<br>
+<br>
+<ul>
+<a name="outline129"></a><br><h2>2.1. Opening the database</h2><br>
+To access a db4o database file or create a new one, call&nbsp;DB4OEMBEDDED.OPENFILE() and&nbsp;provide Db4oEmbedded.newConfiguration() as a configuration template and&nbsp;the path to your database file as the second parameter, to obtain&nbsp;an&nbsp;IObjectContainer instance.&nbsp;IObjectContainer represents "The Database",&nbsp;and will be your primary&nbsp;interface to db4o. Closing the&nbsp;IObjectContainer with the&nbsp;#Close() method will close the&nbsp;database file and release all resources associated with it.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// accessDb4o<br>
+using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// do something with db4o<br>
+}</code></td></tr></table>
+<br>
+<br>
+Db4oFileName&nbsp;&nbsp;is just a string value&nbsp;representing any filename. If the file with this name already exists, it will be opened&nbsp;as db4o database, otherwise a new db4o database will be created.<br>
+For the following examples we will assume that our environment takes care&nbsp;of opening and closing the&nbsp;IObjectContainer automagically, and stores the&nbsp;reference in a variable named 'db'.<br>
+<br>
+<a name="outline130"></a><br><h2>2.2. Storing objects</h2><br>
+To store an object, we simply call&nbsp;#Store() on our database, passing&nbsp;any object as a parameter.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// storeFirstPilot<br>
+Pilot pilot1 = new Pilot("Michael Schumacher", 100);<br>
+db.Store(pilot1);<br>
+Console.WriteLine("Stored {0}", pilot1);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "storeFirstPilot")' /></td></tr></table>
+<br>
+<br>
+We'll need a second pilot, too.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// storeSecondPilot<br>
+Pilot pilot2 = new Pilot("Rubens Barrichello", 99);<br>
+db.Store(pilot2);<br>
+Console.WriteLine("Stored {0}", pilot2);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "storeSecondPilot")' /></td></tr></table>
+<br>
+<br>
+<a name="outline131"></a><br><h2>2.3. Retrieving objects</h2><br>
+The easiest way to see the content of our database is to use Object Manager&nbsp;Enterprise, which will be introduced&nbsp;in the <a href="ObjectManagerOverview.html#ObjectManagerOverview">next chapter</a>&nbsp;.&nbsp;For now let's continue with the API overview and learn how to build db4o queries.<br>
+db4o supplies several different querying systems, <em>Query by Example</em>&nbsp;(QBE),&nbsp;<em>LINQ</em>, <em>Native Queries</em>&nbsp;(NQ) and the <em>SODA Query API</em>&nbsp;(SODA). In this&nbsp;first example we will introduce QBE. Once you are familiar with storing&nbsp;objects, we encourage you to use <a href="Linq.html#LINQ">LINQ</a>&nbsp;.<br>
+<br>
+When using Query-By-Example, you create a prototypical object for db4o to use as an example of what&nbsp;you wish to retrieve. db4o will retrieve all objects of the given type that contain the&nbsp;same (non-default) field values as the example. The results will be returned as an&nbsp;&nbsp;IObjectSet instance. We will use a convenience method&nbsp;#ListResult() to display the contents&nbsp;of our result&nbsp;IObjectSet :<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>public static void ListResult(IObjectSet result)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(result.Count);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;foreach (object item in result)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine(item);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</code></td></tr></table>
+<br>
+<br>
+To retrieve all pilots from our database, we provide an 'empty' prototype:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveAllPilotQBE<br>
+Pilot proto = new Pilot(null, 0);<br>
+IObjectSet result = db.QueryByExample(proto);<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "retrieveAllPilotQBE")' /></td></tr></table>
+<br>
+<br>
+Note that we specify 0 points, but our results were not constrained to only those Pilots&nbsp;with 0 points; 0 is the default value for int fields.<br>
+<br>
+db4o also supplies a shortcut to retrieve all instances of a class:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveAllPilots<br>
+IObjectSet result = db.QueryByExample(typeof(Pilot));<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "retrieveAllPilots")' /></td></tr></table>
+<br>
+<br>
+For .NET&nbsp;&nbsp;there also is a generics shortcut, using the&nbsp;query method:<br>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IList &lt;Pilot> pilots = db.Query&lt;Pilot>(typeof(Pilot));</code></td></tr></table>
+<br>
+<br>
+To query for a pilot by name:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotByName<br>
+Pilot proto = new Pilot("Michael Schumacher", 0);<br>
+IObjectSet result = db.QueryByExample(proto);<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "retrievePilotByName")' /></td></tr></table>
+<br>
+<br>
+And to query for Pilots with a specific number of points:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotByExactPoints<br>
+Pilot proto = new Pilot(null, 100);<br>
+IObjectSet result = db.QueryByExample(proto);<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "retrievePilotByExactPoints")' /></td></tr></table>
+<br>
+<br>
+<br>
+Of course there's much more to db4o queries. They will be covered in more depth in later chapters.<br>
+<br>
+<a name="outline132"></a><br><h2>2.4. Updating objects</h2><br>
+Updating objects is just as easy as storing them. In fact, you use the same&nbsp;#Store() method to update&nbsp;your objects: just call&nbsp;#Store() again after modifying any object.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// updatePilot<br>
+IObjectSet result = db.QueryByExample(new Pilot("Michael Schumacher", 0));<br>
+Pilot found = (Pilot)result.Next();<br>
+found.AddPoints(11);<br>
+db.Store(found);<br>
+Console.WriteLine("Added 11 points for {0}", found);<br>
+RetrieveAllPilots(db);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "updatePilot")' /></td></tr></table>
+<br>
+<br>
+Notice that we query for the object first. This is an importaint point. When you call&nbsp;#Store() to modify a&nbsp;stored object, if the object is not 'known' (having been previously stored or retrieved during the current session),&nbsp;db4o will insert a new object. db4o does this because it does not automatically match up objects to be&nbsp;stored, with objects previously stored. It assumes you are inserting a second object which happens to have&nbsp;the same field values.<br>
+<br>
+To make sure you've updated the pilot, please return to any of the retrieval&nbsp;examples above and run them again.<br>
+<br>
+<a name="outline133"></a><br><h2>2.5. Deleting objects</h2><br>
+Objects are removed from the database using the&nbsp;#Delete() method.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// deleteFirstPilotByName<br>
+IObjectSet result = db.QueryByExample(new Pilot("Michael Schumacher", 0));<br>
+Pilot found = (Pilot)result.Next();<br>
+db.Delete(found);<br>
+Console.WriteLine("Deleted {0}", found);<br>
+RetrieveAllPilots(db);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "deleteFirstPilotByName")' /></td></tr></table>
+<br>
+<br>
+Let's delete the other one, too.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// deleteSecondPilotByName<br>
+IObjectSet result = db.QueryByExample(new Pilot("Rubens Barrichello", 0));<br>
+Pilot found = (Pilot)result.Next();<br>
+db.Delete(found);<br>
+Console.WriteLine("Deleted {0}", found);<br>
+RetrieveAllPilots(db);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.FirstStepsExample", "deleteSecondPilotByName")' /></td></tr></table>
+<br>
+<br>
+Please check the deletion with the retrieval examples above.<br>
+<br>
+As with updating objects, the object to be deleted has to be 'known' to db4o. It is not sufficient&nbsp;to provide a prototype object with the same field values.<br>
+<br>
+<a name="outline134"></a><br><h2>2.6. Conclusion</h2><br>
+That was easy, wasn't it? We have stored, retrieved, updated and&nbsp;deleted objects with a few lines of code. Now you are probably interested to see&nbsp;how the database looks like. Let's have a look using db4o graphical tool - Object Manager in the <a href="ObjectManagerOverview.html#ObjectManagerOverview">next chapter</a>&nbsp;.<br>
+<br>
+<a name="outline135"></a><br><h2>2.7. Full source</h2><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using System.IO;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.Query;<br>
+using Db4odoc.Tutorial;<br>
+namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class FirstStepsExample : Util<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string YapFileName = Path.Combine(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"formula1.yap");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(string[] args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File.Delete(YapFileName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AccessDb4o();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File.Delete(YapFileName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StoreFirstPilot(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StoreSecondPilot(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveAllPilots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrievePilotByName(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrievePilotByExactPoints(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UpdatePilot(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DeleteFirstPilotByName(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DeleteSecondPilotByName(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void AccessDb4o()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// do something with db4o<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void StoreFirstPilot(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot1 = new Pilot("Michael Schumacher", 100);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(pilot1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Stored {0}", pilot1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void StoreSecondPilot(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot2 = new Pilot("Rubens Barrichello", 99);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(pilot2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Stored {0}", pilot2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveAllPilotQBE(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot proto = new Pilot(null, 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(proto);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveAllPilots(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrievePilotByName(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot proto = new Pilot("Michael Schumacher", 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(proto);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrievePilotByExactPoints(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot proto = new Pilot(null, 100);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(proto);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void UpdatePilot(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(new Pilot("Michael Schumacher", 0));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot found = (Pilot)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;found.AddPoints(11);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(found);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Added 11 points for {0}", found);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveAllPilots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DeleteFirstPilotByName(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(new Pilot("Michael Schumacher", 0));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot found = (Pilot)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(found);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Deleted {0}", found);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveAllPilots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void DeleteSecondPilotByName(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(new Pilot("Rubens Barrichello", 0));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot found = (Pilot)result.Next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(found);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Deleted {0}", found);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveAllPilots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

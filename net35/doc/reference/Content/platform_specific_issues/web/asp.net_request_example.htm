@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Platform Specific Issues|Web Environment" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>ASP.NET Request Example</title>
+        <link href="../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../SkinSupport/MadCapAll.js">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../index_CSH.html#platform_specific_issues/web/asp.net_request_example.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../platform_specific_issues.htm">Platform Specific Issues</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../web_environment.htm">Web Environment</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">ASP.NET Request Example</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>ASP.NET Request Example</h1>
+        <p>This example demonstrates how you can provide an object container for each request, to ensure that the requests are isolated from each other. For this we use session object containers. <a href="web_isolation.htm" target="" title="" alt="" class="MCXref" xrefformat="See &quot;{paratext}&quot;">See "Isolation in Web-Applications"</a></p>
+        <p>First, create a new class which implements the IHttpModule-interface. Then register this interface in the Web.config configuration:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">&lt;httpModules&gt;
+  &lt;add name="Db4oDatabase" type="Db4oDoc.WebApp.Infrastructure.Db4oProvider" /&gt;
+  &lt;!-- Other, existing modules--&gt;
+  &lt;add name="ScriptModule" type="System.Web.Handlers.ScriptModule, System.Web.Extensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31BF3856AD364E35"/&gt;
+  &lt;add name="UrlRoutingModule" type="System.Web.Routing.UrlRoutingModule, System.Web.Routing, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31BF3856AD364E35"/&gt;
+&lt;/httpModules&gt;</pre>
+            <div class="codesnippet-meta">Web.config: Add the db4o-http-handler 
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Example-dotNetAppExamples-WebApp-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>Additionally add a key where you specify the path to the database-file. Make sure that you have the data folder inside you web-site directory. The <span class="MCPopup"><a href="javascript:void(0);" class="MCPopupSpot" onclick="FMCPopup( event, this ); return false;" MadCap:src="../asp.net.htm">ASP.NET<img style="border: none;margin-left: 5px;" src="../../SkinSupport/ExpandingClosed.gif" MadCap:altsrc="../../SkinSupport/ExpandingOpen.gif" class="MCExpandingIcon" onload="if ( typeof( FMCPreloadImage ) == 'function' ) { FMCPreloadImage( '../../SkinSupport/ExpandingOpen.gif' ); }" /></a></span> user should have enough rights to create and modify files inside this folder. You should also make sure that the data folder is not accessible to anonymous user; otherwise web-server visitors will be able to download your database:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">&lt;appSettings&gt;
+  &lt;add key="DatabaseFileName" value="~/App_Data/database.db4o"/&gt;
+&lt;/appSettings&gt;</pre>
+            <div class="codesnippet-meta">Web.config: Database path in the configuration 
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Example-dotNetAppExamples-WebApp-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>After that, implement the initializing sequence. When the server starts, it starts up db4o and adds the database to the application-context:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">void</span> Init(HttpApplication context)
+{
+    <span style="color:Blue;">if</span> (<span style="color:Blue;">null</span> == HttpContext.Current.Application[DataBaseInstance])
+    {
+        HttpContext.Current.Application[DataBaseInstance] = OpenDatabase();
+    }
+    RegisterSessionCreation(context);
+}
+
+<span style="color:Blue;">private</span> IEmbeddedObjectContainer OpenDatabase()
+{
+    <span style="color:Blue;">string</span> relativePath = ConfigurationSettings.AppSettings[<span style="color:#A31515;">"DatabaseFileName"</span>];
+    <span style="color:Blue;">string</span> filePath = HttpContext.Current.Server.MapPath(relativePath);
+    <span style="color:Blue;">return</span> Db4oEmbedded.OpenFile(filePath);
+}</pre>
+            <div class="codesnippet-meta">Db4oProvider.cs: open database when the application starts
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Infrastructure/Example-WebApp-Infrastructure-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>On the dispose-method add the shutdown code:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">void</span> Dispose()
+{
+    IDisposable toDispose = HttpContext.Current.Application[DataBaseInstance] <span style="color:Blue;">as</span> IDisposable;
+    <span style="color:Blue;">if</span> (<span style="color:Blue;">null</span> != toDispose)
+    {
+        toDispose.Dispose();
+    }
+}</pre>
+            <div class="codesnippet-meta">Db4oProvider.cs: close the database when the application shuts down
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Infrastructure/Example-WebApp-Infrastructure-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>Now it's time to ensure that each requests has its own object container. To archive that, use the <a href="web_isolation.htm">open-session-method</a>. Register for the request-begin and request-end events. In begin session event, open a new db4o session. In the end request event, close that session.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">private</span> <![CDATA[ ]]><span style="color:Blue;">void</span> RegisterSessionCreation(HttpApplication httpApplication)
+{
+    httpApplication.BeginRequest += OpenSession;
+    httpApplication.EndRequest += CloseSession;
+}
+
+<span style="color:Blue;">private</span> <![CDATA[ ]]><span style="color:Blue;">void</span> OpenSession(<span style="color:Blue;">object</span> sender, EventArgs e)
+{
+    IObjectContainer container =
+        (IObjectContainer)HttpContext.Current.Application[DataBaseInstance];
+    IObjectContainer session = container.Ext().OpenSession();
+    HttpContext.Current.Items[SessionKey] = session;
+}
+
+<span style="color:Blue;">private</span> <![CDATA[ ]]><span style="color:Blue;">void</span> CloseSession(<span style="color:Blue;">object</span> sender, EventArgs e)
+{
+    IObjectContainer session = (IObjectContainer)HttpContext.Current.Items[SessionKey];
+    session.Dispose();
+}</pre>
+            <div class="codesnippet-meta">Db4oProvider.cs: A object container per request
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Infrastructure/Example-WebApp-Infrastructure-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>Finally add a static property which gives access to the request-instance:</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">static</span> IObjectContainer Database
+{
+    <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> (IObjectContainer)HttpContext.Current.Items[SessionKey]; }
+}</pre>
+            <div class="codesnippet-meta">Db4oProvider.cs: provide access to the database
+			<div class="codedownload"><a href="../../CodeExamples/WebApp/Infrastructure/Example-WebApp-Infrastructure-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>That's it. Of course there are other ways to archive the same result. For example you can use dependency injection frameworks like <a href="http://unity.codeplex.com/">Microsoft's Unity</a> to enforce the request scope.</p>
+        <script src="../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

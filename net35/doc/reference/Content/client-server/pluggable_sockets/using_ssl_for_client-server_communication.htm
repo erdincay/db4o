@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Client-Server" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Using SSL For Client-Server Communication</title>
+        <link href="../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../index_CSH.html#client-server/pluggable_sockets/using_ssl_for_client-server_communication.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../client-server.htm">Client-Server</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Using SSL For Client-Server Communication</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1><a name="kanchor104"></a>Using SSL For Client-Server Communication</h1>
+        <p>With the default settings db4o client-server communication is not encrypted and thus can potentially be a dangerous security hole. db4o supports SSL for client server communication. The implementation uses the <a href="../../configuration/networking/pluggable_sockets.htm">pluggable socket</a> to provide secure sockets. </p>
+        <div MadCap:conditions="Primary..NET">
+            <p>The SSL communication uses the .NET security libraries to implement the secure communication. Currently only one way authentication is supported, where the server needs to have a valid certificate. Clients-certificates are currently not supported.</p>
+            <p>On the server you need to add a the server SSL support. Additionally you need to specif the server certificate. This way you can choose from where you want to get the server-certificate. Take a look at the <a href="http://msdn.microsoft.com/en-us/library/system.net.security.aspx">.NET documentation for a more details</a>.</p>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve">IServerConfiguration configuration = Db4oClientServer.NewServerConfiguration();
+<span style="color:Green;">// For the server you need a certificate. For example using a certificate from a file</span>
+X509Certificate2 certificate = <span style="color:Blue;">new</span> X509Certificate2(<span style="color:#A31515;">"cert.cer"</span>);
+configuration.AddConfigurationItem(<span style="color:Blue;">new</span> ServerSslSupport(certificate));</pre>
+                <div class="codesnippet-meta">SSLExample.cs: Add SSL-support to the server
+			<div class="codedownload"><a href="../../CodeExamples/clientserver/ssl/Example-clientserver-ssl-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Dim</span> configuration <span style="color:Blue;">As</span> IServerConfiguration = Db4oClientServer.NewServerConfiguration()
+<span style="color:Green;">' For the server you need a certificate. For example using a certificate from a file</span>
+<span style="color:Blue;">Dim</span> certificate <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">New</span> X509Certificate2(<span style="color:#A31515;">"cert.cer"</span>)
+configuration.AddConfigurationItem(<span style="color:Blue;">New</span> ServerSslSupport(certificate))</pre>
+                <div class="codesnippet-meta">SSLExample.vb: Add SSL-support to the server
+			<div class="codedownload"><a href="../../CodeExamples/clientserver/ssl/Example-clientserver-ssl-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <p>On the client you need to use the client SSL support. Add a callback for additional certificate verification.</p>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve">IClientConfiguration configuration = Db4oClientServer.NewClientConfiguration();
+configuration.AddConfigurationItem(<span style="color:Blue;">new</span> ClientSslSupport(CheckCertificate));</pre>
+                <div class="codesnippet-meta">SSLExample.cs: Add SSL-support to the client
+			<div class="codedownload"><a href="../../CodeExamples/clientserver/ssl/Example-clientserver-ssl-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Dim</span> configuration <span style="color:Blue;">As</span> IClientConfiguration = Db4oClientServer.NewClientConfiguration()
+configuration.AddConfigurationItem(<span style="color:Blue;">New</span> ClientSslSupport(<span style="color:Blue;">AddressOf</span> CheckCertificate))</pre>
+                <div class="codesnippet-meta">SSLExample.vb: Add SSL-support to the client
+			<div class="codedownload"><a href="../../CodeExamples/clientserver/ssl/Example-clientserver-ssl-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">private</span>  <![CDATA[ ]]><span style="color:Blue;">static</span>  <![CDATA[ ]]><span style="color:Blue;">bool</span> CheckCertificate(<span style="color:Blue;">object</span> sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
+{
+    <span style="color:Green;">// here you can check the certificates of the server and accept it if it's ok.)</span>
+    <span style="color:Blue;">return</span>  <![CDATA[ ]]><span style="color:Blue;">true</span>;
+}</pre>
+                <div class="codesnippet-meta">SSLExample.cs: callback for validating the certificate
+			<div class="codedownload"><a href="../../CodeExamples/clientserver/ssl/Example-clientserver-ssl-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Private</span>  <![CDATA[ ]]><span style="color:Blue;">Shared</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span> CheckCertificate(<span style="color:Blue;">ByVal</span> sender <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">Object</span>, <span style="color:Blue;">ByVal</span> certificate <span style="color:Blue;">As</span> X509Certificate, <span style="color:Blue;">ByVal</span> chain <span style="color:Blue;">As</span> X509Chain, <span style="color:Blue;">ByVal</span> sslpolicyerrors <span style="color:Blue;">As</span> SslPolicyErrors) <span style="color:Blue;">As</span>  <![CDATA[ ]]><span style="color:Blue;">Boolean</span>
+    <span style="color:Green;">' here you can check the certificates of the server and accept it if it's ok.</span>
+    <span style="color:Blue;">Return</span>  <![CDATA[ ]]><span style="color:Blue;">True</span>
+<span style="color:Blue;">End</span>  <![CDATA[ ]]><span style="color:Blue;">Function</span></pre>
+                <div class="codesnippet-meta">SSLExample.vb: callback for validating the certificate
+			<div class="codedownload"><a href="../../CodeExamples/clientserver/ssl/Example-clientserver-ssl-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+        </div>
+        <script src="../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

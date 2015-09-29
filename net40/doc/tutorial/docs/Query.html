@@ -1,0 +1,721 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="Query"></a><br>
+<a name="outline139"></a><br><h1>4. Querying</h1><br>
+db4o supplies three querying systems, Query-By-Example (QBE)&nbsp;Native Queries (NQ), and the SODA API. In the previous chapter,&nbsp;you were briefly introduced to <em>Query By Example</em>(QBE).<br>
+<br>
+Query-By-Example (QBE) is appropriate as a quick start for users&nbsp;who are still acclimating to storing and retrieving objects with db4o.<br>
+<br>
+&nbsp;<br>
+LINQ is the recommended db4o querying interface for .NET platforms.&nbsp;<br>
+<br>
+SODA is the underlying internal API. It is provided for backward&nbsp;compatibility and it can be useful for dynamic generation&nbsp;of queries, where LINQ and&nbsp;&nbsp;NQ are too strongly typed.<br>
+<br>
+<a name="QBE"></a><br>
+<ul>
+<a name="outline140"></a><br><h2>4.1. Query by Example (QBE)</h2><br>
+When using <em>Query By Example</em>&nbsp;(QBE) you provide db4o with a&nbsp;template object. db4o will return all of the objects which match all&nbsp;non-default field values. This is done via reflecting all of the fields&nbsp;and building a query expression where all non-default-value fields are&nbsp;combined with AND expressions. Here's an example from the previous chapter:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotByName<br>
+Pilot proto = new Pilot("Michael Schumacher", 0);<br>
+IObjectSet result = db.QueryByExample(proto);<br>
+ListResult(result);</code></td></tr></table>
+<br>
+<br>
+Querying this way has some obvious limitations:<br>
+- db4o must reflect all members of your example object.<br>
+- You cannot perform advanced query expressions. (AND, OR, NOT, etc.)<br>
+- You cannot constrain on values like 0 (integers), "" (empty strings),&nbsp;or nulls (reference types) because they would be interpreted as unconstrained.<br>
+- You need to be able to create objects without initialized fields.&nbsp;That means you can not initialize fields where they are declared.&nbsp;You can not enforce contracts that objects of a class are only&nbsp;allowed in a well-defined initialized state.<br>
+- You need a constructor to create objects without initialized fields.<br>
+<br>
+To get around all of these constraints, db4o provides the Native Query (NQ) system.<br>
+<br>
+<br>
+<a name="NativeQueries"></a><br>
+<a name="outline141"></a><br><h2>4.2. Native Queries</h2><br>
+Wouldn't it be nice to pose queries in the programming&nbsp;language that you are using? Wouldn't it be nice if all your query code was&nbsp;100% typesafe, 100% compile-time checked and 100% refactorable? Wouldn't&nbsp;it be nice if the full power of object-orientation could be used&nbsp;by calling methods from within queries? Enter Native Queries. <br>
+<br>
+Native queries are the main db4o query interface and they are the&nbsp;recommended way to query databases from your application. Because native&nbsp;queries simply use the semantics of your programming language, they are&nbsp;perfectly standardized and a safe choice for the future.<br>
+<br>
+Native Queries are available for all platforms supported by db4o.<br>
+<br>
+<ul>
+<a name="outline142"></a><br><h2>4.2.1. Concept</h2>The concept of native queries is taken from the following two papers:<br>
+<br>
+- <a href="http://www.cs.utexas.edu/users/wcook/papers/NativeQueries/NativeQueries8-23-05.pdf" target="_blank">Cook/Rosenberger, Native Queries for Persistent Objects, A Design White Paper</a><br>
+- <a href="http://www.cs.utexas.edu/users/wcook/papers/SafeQuery05/SafeQueryFinal.pdf" target="_blank">Cook/Rai, Safe Query Objects: Statically Typed Objects as Remotely Executable Queries</a><br>
+<br>
+<a name="outline143"></a><br><h2>4.2.2. Principle</h2>Native Queries provide the ability to run one or more lines&nbsp;of code against all instances of a class. Native query expressions should&nbsp;return true to mark specific instances as part of the result set.&nbsp;db4o will attempt to optimize native query expressions and run them against indexes&nbsp;and without instantiating actual objects, where this is possible.<br>
+<br>
+<a name="outline144"></a><br><h2>4.2.3. Simple Example</h2>Let's look at how a simple native query&nbsp;will look like in some of the programming languages and dialects that db4o&nbsp;supports:<br>
+<br>
+<b>C# .NET </b><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IList &lt;Pilot> pilots = db.Query &lt;Pilot> (delegate(Pilot pilot) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return pilot.Points == 100;<br>
+});</code></td></tr></table>
+&nbsp;<br>
+<br>
+<b>Java JDK 5</b><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>List &lt;Pilot> pilots = db.query(new Predicate&lt;Pilot>() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public boolean match(Pilot pilot) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pilot.getPoints() == 100;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+});</code></td></tr></table>
+<br>
+<br>
+<br>
+Public Class PilotHundredPoints <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Inherits Predicate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Public Function Match (pilot As Pilot) as Boolean<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If pilot.Points = 100 Then <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Return True <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Else <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Return False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;End Function<br>
+End Class<br>
+<br>
+A side note on the above syntax:<br>
+For all dialects without support for generics, Native Queries&nbsp;work by convention. A class that extends the&nbsp;com.db4o.Predicate class is expected to have a&nbsp;boolean&nbsp;#Match() method with one parameter to describe the&nbsp;class extent:<br>
+<br>
+&nbsp;<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>bool Match(Pilot candidate);</code></td></tr></table>
+&nbsp;&nbsp;<br>
+<br>
+When using native queries, don't forget that modern integrated&nbsp;development environments (IDEs) can do all the typing&nbsp;work around the native query expression for you, if you use&nbsp;templates and auto-completion.<br>
+<br>
+The following example shows how to create an autocompletion code snippet in Visual Studio 2005.<br>
+Create a "nq.snippet" file in any text editor.<br>
+Paste the following code:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>&nbsp;&lt;?xml version="1.0" encoding="utf-8" ?><br>
+&lt;CodeSnippets&nbsp;&nbsp;xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;CodeSnippet Format="1.0.0"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Header><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Title>NQ&lt;/Title><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Shortcut>NQ&lt;/Shortcut><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Description>Code snippet for Native Query&lt;/Description><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Author>db4objects Inc.&lt;/Author><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;SnippetTypes><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;SnippetType>Expansion&lt;/SnippetType><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/SnippetTypes><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Header><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Snippet><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Declarations><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Literal><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ID>type&lt;/ID><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ToolTip>Type&lt;/ToolTip><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Default>MyType&lt;/Default><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Literal><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Literal><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ID>var&lt;/ID><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ToolTip>variable&lt;/ToolTip><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Default>myType&lt;/Default><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Literal><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Literal><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ID>expression&lt;/ID><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ToolTip>Boolean expression&lt;/ToolTip><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Default>return true;&lt;/Default><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Literal><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Declarations><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Code Language="csharp">&lt;![CDATA[ IList&lt;$type$> list = db.Query&lt;$type$>(delegate($type$ $var$)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$expression$<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});]]><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Code><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Snippet><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/CodeSnippet><br>
+&lt;/CodeSnippets> </code></td></tr></table>
+&nbsp;<br>
+<br>
+Save the file.<br>
+In the Visual Studio 2005 open Tools/Code SnippetsManager<br>
+Select language "Visual c#" if not yet selected. Press "Import..." button and select the&nbsp;newly created file. Select "Visual c#" as the location and press "Finish" button. <br>
+Now you can use the snippet by selecting it from "Edit/InstelliSense/Insert Snippet..." menu.<br>
+<br>
+<br>
+<a name="outline145"></a><br><h2>4.2.4. Advanced Example</h2>For complex queries, the native syntax is very precise and quick&nbsp;to write. Let's compare to a SODA query that finds all pilots&nbsp;with a given name or a score within a&nbsp;given range:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// storePilots<br>
+db.Store(new Pilot("Michael Schumacher", 100));<br>
+db.Store(new Pilot("Rubens Barrichello", 99));</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.NQExample", "storePilots")' /></td></tr></table>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveComplexSODA<br>
+IQuery query=db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+IQuery pointQuery=query.Descend("_points");<br>
+query.Descend("_name").Constrain("Rubens Barrichello")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.Or(pointQuery.Constrain(99).Greater()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.And(pointQuery.Constrain(199).Smaller()));<br>
+IObjectSet result=query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.NQExample", "retrieveComplexSODA")' /></td></tr></table>
+<br>
+<br>
+Here is how the same query will look like with native query&nbsp;syntax,&nbsp;fully accessible to autocompletion, refactoring and other IDE&nbsp;features, fully checked at compile time:<br>
+<br>
+<b>C# .NET 2.0</b><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IList &lt;Pilot> result = db.Query&lt;Pilot> (delegate(Pilot pilot) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return pilot.Points > 99<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp; pilot.Points &lt; 199<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| pilot.Name == "Rubens Barrichello";<br>
+});</code></td></tr></table>
+&nbsp;<br>
+<br>
+<b>Java JDK 5</b><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>List &lt;Pilot> result = db.query(new Predicate&lt;Pilot>() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public boolean match(Pilot pilot) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pilot.getPoints() > 99<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp; pilot.getPoints() &lt; 199<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| pilot.getName().equals("Rubens Barrichello");<br>
+&nbsp;&nbsp;&nbsp;}<br>
+});</code></td></tr></table>
+<br>
+<br>
+<a name="outline146"></a><br><h2>4.2.5. Arbitrary Code</h2>Basically that's all there is to know about native queries to be able&nbsp;to use them efficiently. In principle&nbsp;you can run arbitrary code as native queries, you just have to be&nbsp;very careful with side effects - especially those that might affect&nbsp;persistent objects.<br>
+<br>
+Let's run an example that involves some more of the language features&nbsp;available.<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using Db4objects.Db4o.Query;<br>
+namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class ArbitraryQuery : Predicate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;private int[] _points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public ArbitraryQuery(int[] points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_points=points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public bool Match(Pilot pilot)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foreach (int points in _points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (pilot.Points == points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pilot.Name.StartsWith("Rubens");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+<br>
+<a name="outline147"></a><br><h2>4.2.6. Native Query Performance</h2>One drawback of native queries has to be pointed out:&nbsp;Under the hood db4o tries to analyze native queries to&nbsp;convert them to SODA. This is not possible for all queries.&nbsp;For some queries it is very difficult to analyze the flowgraph. In&nbsp;this case db4o will have to instantiate some of the persistent objects&nbsp;to actually run the native query code. db4o will try to&nbsp;analyze parts of native query expressions to keep object instantiation&nbsp;to the minimum.<br>
+<br>
+The development of the native query optimization processor will&nbsp;be an ongoing process in a close dialog with the db4o community.&nbsp;Feel free to contribute your results and your needs by providing&nbsp;feedback to our <a href="http://forums.db4o.com/" target="_blank">db4o forums</a>(Forums&nbsp;are accessible&nbsp;through <a href="http://developer.db4o.com/user/CreateUser.aspx?ReturnUrl=/default.aspx" target="_blank">free db4o membership </a>&nbsp;).<br>
+<br>
+<br>
+With the current implementation, all above examples will run&nbsp;optimized, except for the "Arbitrary Code" example - we are working on it.<br>
+<br>
+<a name="outline148"></a><br><h2>4.2.7. Full source</h2><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using System.IO;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.Query;<br>
+using Db4odoc.Tutorial;<br>
+namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class NQExample : Util<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string YapFileName = Path.Combine(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"formula1.yap");&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(string[] args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StorePilots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveComplexSODA(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveComplexNQ(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveArbitraryCodeNQ(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ClearDatabase(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void StorePilots(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(new Pilot("Michael Schumacher", 100));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(new Pilot("Rubens Barrichello", 99));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveComplexSODA(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query=db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery pointQuery=query.Descend("_points");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_name").Constrain("Rubens Barrichello")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Or(pointQuery.Constrain(99).Greater()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.And(pointQuery.Constrain(199).Smaller()));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result=query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveComplexNQ(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.Query(new ComplexQuery());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveArbitraryCodeNQ(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.Query(new ArbitraryQuery(new int[]{1,100}));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void ClearDatabase(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while (result.HasNext())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(result.Next());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using Db4objects.Db4o.Query;<br>
+namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class ComplexQuery : Predicate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public bool Match(Pilot pilot)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pilot.Points > 99<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp; pilot.Points &lt; 199<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| pilot.Name=="Rubens Barrichello";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using Db4objects.Db4o.Query;<br>
+namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class ArbitraryQuery : Predicate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;private int[] _points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public ArbitraryQuery(int[] points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_points=points;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public bool Match(Pilot pilot)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foreach (int points in _points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (pilot.Points == points)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pilot.Name.StartsWith("Rubens");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br>
+<br>
+<a name="LINQ"></a><br>
+</ul>
+<a name="outline149"></a><br><h2>4.3. LINQ</h2><br>
+db4o querying syntax has got even easier with the introduction of .NET LINQ queries.&nbsp;LINQ allows you to write compile checked db4o queries, which can be refactored&nbsp;automatically when a field name changes and which are supported by code&nbsp;auto-completion tools.<br>
+In order to use LINQ you will need to add reference to&nbsp;Db4objects.Db4o.Linq.dll and usage to your program class:<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System.Linq;<br>
+using Db4objects.Db4o.Linq;</code></td></tr></table>
+&nbsp;<br>
+<br>
+If you are already familiar with LINQ syntax, you can just start writing&nbsp;LINQ to query db4o.&nbsp;&nbsp;Otherwise you may want to familiarise yourself with&nbsp;LINQ resources on <a href="http://msdn2.microsoft.com/en-us/library/bb397926.aspx" target="_blank">http://msdn2.microsoft.com/en-us/library/bb397926.aspx</a>&nbsp;MSDN.<br>
+<br>
+Note that LINQ requires at least .NET 3.5.<br>
+<br>
+<ul>
+<a name="outline150"></a><br><h2>4.3.1. Linq Examples</h2>Let's prepare some objects in our database to query against:<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// storeObjects<br>
+db.Store(new Car("Ferrari", (new Pilot("Michael Schumacher", 100))));<br>
+db.Store(new Car("BMW", (new Pilot("Rubens Barrichello", 99))));</code></td></tr></table>
+<br>
+<br>
+The simplest LINQ query will look like this:<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilot<br>
+IEnumerable&lt;Pilot> result = from Pilot p in db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where p.Name.StartsWith("Michael")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select p;<br>
+ListResult(result);</code></td></tr></table>
+<br>
+You can see that we are using db4o object container as a datasource,&nbsp;the rest of the syntax is generic to all LINQ queries.<br>
+<br>
+Now let's try a bit more complex selection:<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotByCar<br>
+IEnumerable&lt;Pilot> result = from Car c in db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where c.Model.StartsWith("F")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp; (c.Pilot.Points > 99 &amp;&amp; c.Pilot.Points &lt;150)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select c.Pilot;<br>
+ListResult(result);</code></td></tr></table>
+<br>
+So we can constrain on one object and retrieve a list of others. You can&nbsp;even create completely new objects based on the retrieved information&nbsp;using <em>select new MyObject(field1, field2...)</em>. Try to experiment with&nbsp;different LINQ queries against db4o database.<br>
+<br>
+<a name="outline151"></a><br><h2>4.3.2. Performance</h2>db4o query processor is based on SODA queries, therefore LINQ query is analysed&nbsp;and converted to SODA syntax in the runtime. However, in some cases this&nbsp;conversion is not possible. This can happen when query is constrained&nbsp;against aggregates or projections of a field value and in other cases&nbsp;when SODA equivalent does not exists. For example:<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotUnoptimized<br>
+IEnumerable&lt;Pilot> result = from Pilot p in db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where (p.Points - 81) == p.Name.Length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select p;<br>
+ListResult(result);</code></td></tr></table>
+<br>
+The query still works, but it requires instantiation of all candidate&nbsp;objects, which is much less performant than SODA query. <br>
+<br>
+<a name="outline152"></a><br><h2>4.3.3. LINQ for Compact Framework</h2>Compact Framework version 3.5 contains LINQ implementation for querying&nbsp;objects, however it does not contain the namespace System.Linq.Expressions,&nbsp;which is used by all optimized LINQ providers. Luckily there is a solution&nbsp;to this problem. Mono implementation of System.Core can be used to&nbsp;support optimized LINQ providers and expression interpreter contributed&nbsp;by <a href="http://www.mainsoft.com/" target="_blank">Mainsoft</a>&nbsp;&nbsp;to Mono's System.Core can be used to support full LINQ expression trees.<br>
+<br>
+These assemblies were used by db4o team to compile a new assembly,&nbsp;System.Linq.Expressions.dll, which provides LINQ support&nbsp;to .NET Compact Framework 3.5. In order to use the full LINQ&nbsp;functionality including optimisation, add a reference to&nbsp;System.Linq.Expressions.dll in your project and enjoy.<br>
+<br>
+System.Linq.Expressions.dll can be found in bin\compact-3.5 folder&nbsp;of your distribution. You can also examine the code&nbsp;in src\Libs\compact-3.5\System.Linq.Expressions or db4o <a href="https://source.db4o.com/db4o/trunk/db4o.net/Libs/compact-3.5/System.Linq.Expressions/" target="_blank">SVN</a>&nbsp;&nbsp;.<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<a name="SODAQueryAPI"></a><br>
+</ul>
+<a name="outline153"></a><br><h2>4.4. SODA Query API</h2><br>
+The SODA query API is db4o's low level querying API, allowing direct access&nbsp;to nodes of query graphs. Since SODA uses strings to identify fields, it is&nbsp;neither perfectly typesafe nor compile-time checked and it also is quite&nbsp;verbose to write.<br>
+<br>
+For most applications <a href="Linq.html#LINQ">LINQ </a>&nbsp;and<a href="Query.html#NativeQueries">Native Queries</a>&nbsp;will be the better&nbsp;querying interface.<br>
+<br>
+However there can be applications where dynamic generation of queries&nbsp;is required, that's why SODA is explained here.<br>
+<br>
+<ul>
+<a name="outline154"></a><br><h2>4.4.1. Simple queries</h2><br>
+Let's see how our familiar QBE queries are expressed with SODA. A new Query object&nbsp;is created through the&nbsp;#Query() method of the ObjectContainer and we can add&nbsp;Constraint instances to it. To find all Pilot instances, we constrain the&nbsp;query with the Pilot class object.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveAllPilots<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveAllPilots")' /></td></tr></table>
+<br>
+<br>
+Basically, we are exchanging our 'real' prototype for a meta description of&nbsp;the objects we'd like to hunt down: a<b>&nbsp;query graph</b>&nbsp;made up of&nbsp;query nodes and constraints. A query node is a placeholder for a candidate&nbsp;object, a constraint decides whether to add or exclude candidates from the result.<br>
+<br>
+Our first simple graph looks like this.<br>
+<br>
+<img border="0" src="querygraph/1.gif" /><br>
+<br>
+We're just asking any candidate object (here: any object in the database)&nbsp;to be of type Pilot to aggregate our result.<br>
+<br>
+To retrieve a pilot by name, we have to further constrain the candidate&nbsp;pilots by descending to their name field and constraining this with the&nbsp;respective candidate String.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotByName<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+query.Descend("_name").Constrain("Michael Schumacher");<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrievePilotByName")' /></td></tr></table>
+<br>
+<br>
+What does &nbsp;#Descend &nbsp;mean here? Well, just as we did in our 'real' prototypes,&nbsp;we can attach constraints to child members of our candidates.<br>
+<br>
+<br>
+<img border="0" src="querygraph/2net.gif" /><br>
+<br>
+So a candidate needs to be of type Pilot and have a member named'_name'&nbsp;that is equal to the given String to be accepted for the result.<br>
+<br>
+Note that the class constraint is not required: If we left it out, we would&nbsp;query for all objects that contain a'_name'&nbsp;&nbsp;member with the given value. In&nbsp;most cases this will not be the desired behavior, though.<br>
+<br>
+Finding a pilot by exact points is analogous.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrievePilotByExactPoints<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+query.Descend("_points").Constrain(100);<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrievePilotByExactPoints")' /></td></tr></table>
+<br>
+<br>
+<a name="outline155"></a><br><h2>4.4.2. Advanced queries</h2><br>
+Now there are occasions when we don't want to query for exact field values, but&nbsp;rather for value ranges, objects not containing given member values, etc. This functionality&nbsp;is provided by the Constraint API.<br>
+<br>
+First, let's negate a query to find all pilots who are not Michael Schumacher:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveByNegation<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+query.Descend("_name").Constrain("Michael Schumacher").Not();<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveByNegation")' /></td></tr></table>
+<br>
+<br>
+Where there is negation, the other boolean operators can't be too far.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveByConjunction<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+IConstraint constr = query.Descend("_name")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain("Michael Schumacher");<br>
+query.Descend("_points")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain(99).And(constr);<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveByConjunction")' /></td></tr></table>
+<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveByDisjunction<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+IConstraint constr = query.Descend("_name")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain("Michael Schumacher");<br>
+query.Descend("_points")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain(99).Or(constr);<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveByDisjunction")' /></td></tr></table>
+<br>
+<br>
+We can also constrain to a comparison with a given value.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveByComparison<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+query.Descend("_points")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain(99).Greater();<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveByComparison")' /></td></tr></table>
+<br>
+<br>
+The query API also allows to query for field default values.&nbsp;<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveByDefaultFieldValue<br>
+Pilot somebody = new Pilot("Somebody else", 0);<br>
+db.Store(somebody);<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+query.Descend("_points").Constrain(0);<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);<br>
+db.Delete(somebody);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveByDefaultFieldValue")' /></td></tr></table>
+<br>
+<br>
+It is also possible to have db4o sort the results.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// retrieveSorted<br>
+IQuery query = db.Query();<br>
+query.Constrain(typeof(Pilot));<br>
+query.Descend("_name").OrderAscending();<br>
+IObjectSet result = query.Execute();<br>
+ListResult(result);<br>
+query.Descend("_name").OrderDescending();<br>
+result = query.Execute();<br>
+ListResult(result);</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "retrieveSorted")' /></td></tr></table>
+<br>
+<br>
+All these techniques can be combined arbitrarily, of course. Please try&nbsp;it out. There still may be cases left where the predefined query API&nbsp;constraints may not be sufficient - don't worry, you can always let&nbsp;db4o run any arbitrary code that you provide in an Evaluation.&nbsp;Evaluations will be discussed&nbsp;in a <a href="Evaluations.html#Evaluations">later chapter</a>.<br>
+<br>
+To prepare for the next chapter, let's clear the database.<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// clearDatabase<br>
+IObjectSet result = db.QueryByExample(typeof(Pilot));<br>
+foreach (object item in result)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(item);<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter1.QueryExample", "clearDatabase")' /></td></tr></table>
+<br>
+<br>
+<a name="outline156"></a><br><h2>4.4.3. Conclusion</h2>Now you have been provided with the following alternative approaches to query&nbsp;db4o databases: Query-By-Example,.? net&nbsp;&nbsp;LINQ,&nbsp;&nbsp;Native Queries, SODA.<br>
+<br>
+Which one is the best to use? Some hints:<br>
+- LINQ is a standard typesafe queries for .NET languages and&nbsp;is recommended for use with .NET version of db4o.<br>
+- Native queries are targeted to be the primary interface for db4o, so they&nbsp;should be preferred.<br>
+- With the current state of the db4o query optimizer there may be queries&nbsp;that will execute faster in SODA style, so it can be used to tune applications.&nbsp;SODA can also be more convenient for constructing dynamic queries at runtime.<br>
+- Query-By-Example is nice for simple one-liners, but restricted in&nbsp;functionality. If you like this approach, use it as long as it suits your&nbsp;application's needs.<br>
+<br>
+Of course you can mix these strategies as needed.<br>
+<br>
+We have finished our walkthrough and seen the various ways db4o provides&nbsp;to pose queries. But our domain model is not complex at all, consisting of&nbsp;one class only. Let's have&nbsp;a look at the way db4o handles object associations in the <a href="Structured.html#Structured">next chapter</a>&nbsp;.<br>
+<br>
+<a name="outline157"></a><br><h2>4.4.4. Full source</h2><br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>using System;<br>
+using System.IO;<br>
+using Db4objects.Db4o;<br>
+using Db4objects.Db4o.Query;<br>
+using Db4odoc.Tutorial;<br>
+namespace Db4odoc.Tutorial.F1.Chapter1<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class QueryExample : Util<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly static string YapFileName = Path.Combine(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"formula1.yap");&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void Main(string[] args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StoreFirstPilot(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StoreSecondPilot(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveAllPilots(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrievePilotByName(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrievePilotByExactPoints(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveByNegation(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveByConjunction(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveByDisjunction(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveByComparison(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveByDefaultFieldValue(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RetrieveSorted(db); <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ClearDatabase(db);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void StoreFirstPilot(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot1 = new Pilot("Michael Schumacher", 100);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(pilot1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Stored {0}", pilot1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void StoreSecondPilot(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot2 = new Pilot("Rubens Barrichello", 99);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(pilot2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Stored {0}", pilot2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveAllPilots(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrievePilotByName(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_name").Constrain("Michael Schumacher");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrievePilotByExactPoints(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_points").Constrain(100);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveByNegation(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_name").Constrain("Michael Schumacher").Not();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveByConjunction(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IConstraint constr = query.Descend("_name")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain("Michael Schumacher");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_points")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain(99).And(constr);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveByDisjunction(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IConstraint constr = query.Descend("_name")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain("Michael Schumacher");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_points")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain(99).Or(constr);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveByComparison(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_points")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Constrain(99).Greater();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveByDefaultFieldValue(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pilot somebody = new Pilot("Somebody else", 0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Store(somebody);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_points").Constrain(0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(somebody);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void RetrieveSorted(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IQuery query = db.Query();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Constrain(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_name").OrderAscending();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query.Descend("_name").OrderDescending();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result = query.Execute();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ListResult(result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void ClearDatabase(IObjectContainer db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IObjectSet result = db.QueryByExample(typeof(Pilot));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foreach (object item in result)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Delete(item);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</code></td></tr></table>
+<br>
+<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

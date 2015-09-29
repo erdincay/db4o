@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="ObjectManagerOverview"></a><br>
+<a name="outline136"></a><br><h1>3. Object Manager Enterprise Overview</h1><br>
+If you did not install the Object Manager Enterprise yet, please, return to <a href="FirstGlance.html#FirstGlance">FirstGlance</a>&nbsp;chapter and follow the installation instructions there.<br>
+Once the Object Manager Enterprise (OME) is installed you can see it in&nbsp;Visual Studio Tools menu:<br>
+<img border="0" src="omn1.png" /><br>
+ <br>
+You should also be able to see OME toolbar icons:<br>
+<img border="0" src="omn_tool.png" /><br>
+<br>
+<ul>
+<a name="outline137"></a><br><h2>3.1. Browsing the database</h2>In the <a href="First.html#First">previous chapter</a>&nbsp;we've learned how to create a new database&nbsp;and store objects in it. Let's create a new database and store some objects in it now:<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>// storePilots<br>
+using(IObjectContainer db = Db4oEmbedded.OpenFile(YapFileName))<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot1 = new Pilot("Michael Schumacher", 100);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;db.Store(pilot1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Stored {0}", pilot1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Pilot pilot2 = new Pilot("Rubens Barrichello", 99);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;db.Store(pilot2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Console.WriteLine("Stored {0}", pilot2);<br>
+}</code></td><td class="lg" align="left" valign="bottom" width=43><input type='button' class='button' value='Run' onclick='window.external.RunExample("com.db4odoc.f1.chapter3.OMEExample", "storePilots")' /></td></tr></table>
+<br>
+Now we can see the resultant database in the Object Manager. Please select&nbsp;Tools->Object Manager Enterprise->Connect (or use a shortcut button from&nbsp;the toolbar menu) and browse to ome.db4o file in your Local Application&nbsp;Data folder. (normally it is C:\Documents and Settings\[user name]\Local Settings\Application Data on Windows XP/2000, c:/Users/[user name]/AppData/Local on Windows Vista).<br>
+Once you've connected you will see a screen similar to this:<br>
+<img border="0" src="omn_Pilot.png" /><br>
+ <br>
+In this view you can see:<br>
+-&nbsp;&nbsp;&nbsp;&nbsp;Db4o Browser:&nbsp;&nbsp;window displaying the contents of the open db4o database<br>
+-&nbsp;&nbsp;&nbsp;&nbsp;Database Properties: window displaying the properties of the open database&nbsp;or the properties of the selected database class<br>
+-&nbsp;&nbsp;&nbsp;&nbsp;Build Query: windows allowing to build a query using drag&drop functionality<br>
+-&nbsp;&nbsp;&nbsp;&nbsp;Query Results: window to browse the results of the query execution<br>
+ <br>
+The Db4o Browser window shows that there is 1 class in the database (Pilot),&nbsp;which contains 2 fields: _name and _points. In the Property Viewer you can see more&nbsp;information about the class fields. You can also change "Indexed" field and add the&nbsp;index to the database by pressing "Save Index" button.<br>
+The filter panel on the top of the view allows easier navigation through the&nbsp;database with lots of different classes. You can use wildcard searches and benefit&nbsp;from the search history to make the selection faster. To further improve the navigation&nbsp;experience, you can create favourite folders and drag&drop frequently used&nbsp;classes into these folders.<br>
+<img border="0" src="omn_fav.png" /><br>
+<a name="outline138"></a><br><h2>3.2. Querying</h2>It is easy to retrieve all of the Pilot instances from the database: just right-click&nbsp;the Pilot class in Db4o Browser and select "Show All Objects". The list of the Pilot&nbsp;objects will be shown in the Query Result view:<br>
+<img border="0" src="omn_result.png" /><br>
+ <br>
+You can see object details in the detailed view below. Try to change any values and use&nbsp;Save button to persist the changes to the database. You can also use Delete button to&nbsp;delete objects from the database. For the objects containing field objects you will be&nbsp;prompted to use cascade on delete.<br>
+More complex queries can be done by using Query Builder view:<br>
+<img border="0" src="omn_query.png" /><br>
+ <br>
+Drag "name" field from the Db4o Browser view into the Query Builder view, set&nbsp;condition "Contains", put a value "a" and run the query. You can return to the&nbsp;Built Query tab and modify the query later on again. For example: add "AND" operator,&nbsp;drag "name" field, set Condition to "Starts With" and the value to "M". Re-run the query. <br>
+If you want only selected fields to be displayed in the query result, drag and drop&nbsp;fields to be displayed from Db4o Browser into "Attribute List" window.<br>
+<img border="0" src="omn_attr.png" /><br>
+ <br>
+When the new query is created, the previous query is stored and can be selected&nbsp;from the history drop-down:<br>
+<img border="0" src="omn_qhistory.png" /><br>
+ <br>
+More sophisticated queries can be build by joining grouped constraints using "Add Group"&nbsp;button.<br>
+When you are done working with the database in OME, you can close the connection&nbsp;by using Tools->Object Manager Enterprise-> Disconnect menu command or by using&nbsp;the equivalent button on the toolbar. <br>
+<br>
+In the <a href="Query.html#Query">next chapter</a>&nbsp;&nbsp;we will explore more about db4o&nbsp;querying capabilities. You can continue using OME while going&nbsp;through the rest of this tutorial. If you are using the interactive&nbsp;version you will find the database in formula1.db4o file in your&nbsp;Local Application Data folder (normally it is C:\Documents and Settings\[user name]\Local&nbsp;Settings\Application Data on Windows XP/2000, c:/Users/[user name]/AppData/Local on Windows Vista)&nbsp;Please, remember to disconnect OME before running any of the tutorial&nbsp;examples, as only one active connection is allowed to the database file.&nbsp;&nbsp;<br>
+<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

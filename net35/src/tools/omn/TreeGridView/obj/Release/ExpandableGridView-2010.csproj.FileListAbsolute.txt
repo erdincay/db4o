@@ -1,0 +1,8 @@
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\ExpandableGridView.dll
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\ExpandableGridView.pdb
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\TreeGridView\obj\Release\ResolveAssemblyReference.cache
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\TreeGridView\obj\Release\AdvancedDataGridView.Properties.Resources.resources
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\TreeGridView\obj\Release\GenerateResource.read.1.tlog
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\TreeGridView\obj\Release\GenerateResource.write.1.tlog
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\TreeGridView\obj\Release\ExpandableGridView.dll
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\TreeGridView\obj\Release\ExpandableGridView.pdb

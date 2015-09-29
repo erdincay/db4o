@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CatapultToc Version="1" DescendantCount="13">
+    <TocEntry Title="db4o Replication System" Link="/Content/welcome.htm" ComputedResetPageLayout="true" ComputedFirstTopic="true" DescendantCount="0" />
+    <TocEntry Title="Getting Started" Link="/Content/db4o_replication_system_drs/getting_started.htm" ComputedFirstTopic="false" DescendantCount="0" />
+    <TocEntry Title="db4o Databases Replication" Link="/Content/db4o_replication_system_drs/db4o_databases_replication.htm" ComputedFirstTopic="false" DescendantCount="4">
+        <TocEntry Title="Simple Example" Link="/Content/db4o_replication_system_drs/db4o_databases_replication/simple_example.htm" ComputedFirstTopic="false" DescendantCount="0" />
+        <TocEntry Title="Bidirectional Replication" Link="/Content/db4o_replication_system_drs/db4o_databases_replication/bi-directional_replication.htm" ComputedFirstTopic="false" DescendantCount="0" />
+        <TocEntry Title="Selective Replication" Link="/Content/db4o_replication_system_drs/db4o_databases_replication/selective_replication.htm" ComputedFirstTopic="false" DescendantCount="0" />
+        <TocEntry Title="Replicate Deletions" Link="/Content/db4o_replication_system_drs/db4o_databases_replication/deleted_objects_replication.htm" ComputedFirstTopic="false" DescendantCount="0" />
+    </TocEntry>
+    <TocEntry Title="Advanced Replication Strategies" Link="/Content/db4o_replication_system_drs/advanced_replication_strategies.htm" ComputedFirstTopic="false" DescendantCount="3">
+        <TocEntry Title="Events" Link="/Content/db4o_replication_system_drs/advanced_replication_strategies/events.htm" ComputedFirstTopic="false" DescendantCount="0" />
+        <TocEntry Title="Dealing with Conflicts" Link="/Content/db4o_replication_system_drs/advanced_replication_strategies/dealing_with_conflicts.htm" ComputedFirstTopic="false" DescendantCount="0" />
+        <TocEntry Title="Prepare Old Databases for Replication" Link="/Content/db4o_replication_system_drs/advanced_replication_strategies/Prepare_old_databases_for_replication.htm" ComputedFirstTopic="false" DescendantCount="0" />
+    </TocEntry>
+    <TocEntry Title="Deployment Instructions" Link="/Content/db4o_replication_system_drs/deployment_instructions.htm" ComputedFirstTopic="false" DescendantCount="0" />
+    <TocEntry Title="License" Link="/Content/db4o_replication_system_drs/license.htm" ComputedFirstTopic="false" DescendantCount="0" />
+</CatapultToc>

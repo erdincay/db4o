@@ -1,0 +1,10 @@
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMAddin.AddIn
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMAddin.dll
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\dll\omn\OMAddin.pdb
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\ResolveAssemblyReference.cache
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\OMAddin-2010.csproj.ResolveComReference.cache
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\OMAddin.CommandBar.resources
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\GenerateResource.read.1.tlog
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\GenerateResource.write.1.tlog
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\OMAddin.dll
+b:\db4o\cruisecontrol-projects\production\working\db4obuild\dist\net\db4o-8.0\src\tools\omn\OMADDIN\obj\Release\OMAddin.pdb

@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="Configuration"></a><br>
+<a name="outline222"></a><br><h1>14. Configuration</h1><br>
+db4o provides a wide range of configuration methods to request&nbsp;special behaviour. For a complete list of all available methods&nbsp;see the API documentation for the&nbsp;Db4objects.Db4o.Config and Db4objects.Db4o.CS.Config namespaces.&nbsp;&nbsp;<br>
+A more complete description of Configuration usage and scope can also&nbsp;be obtained from the <a href="http://developer.db4o.com/Documentation.aspx" target="_blank">Reference</a>&nbsp;&nbsp;documentation.<br>
+<br>
+Some hints around using configuration calls:<br>
+<br>
+<ul>
+<a name="outline223"></a><br><h2>14.1. Scope</h2>Configuration should be created and passed to an opening ObjectContainer or ObjectServer:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();</code></td></tr></table>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IServerConfiguration serverConfig = Db4oClientServer.NewServerConfiguration();</code></td></tr></table>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IClientConfiguration clientConfig = Db4oClientServer.NewClientConfiguration();</code></td></tr></table>
+<br>
+<br>
+Appropriate configuration should be submitted when an&nbsp;IObjectContainer &nbsp;ObjectServer is opened:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>Db4oEmbedded.OpenFile(config, filename)</code></td></tr></table>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>Db4oClientServer.OpenServer(serverConfig, filename, PORT)</code></td></tr></table>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>Db4oClientServer.OpenClient(clientConfig, HOST, PORT, USER, PASS);</code></td></tr></table>
+<br>
+<br>
+A separate configuration instance should be created for each new&nbsp;IObjectContainer &nbsp;ObjectServer &nbsp;It is recommended to use a factory method with all the necessary settings.<br>
+<br>
+<br>
+<a name="outline224"></a><br><h2>14.2. Calling Methods</h2>Configurations that influence the database file format will&nbsp;have to take place, before a database is created, before the&nbsp;first&nbsp;#OpenXXX() call. Some examples:<br>
+<br>
+<table width="100%" cellpadding="3" cellspacing="0" border="0"><tr><td class="lg">
+<code>IEmbeddedConfiguration conf = Db4oEmbedded.NewConfiguration();<br>
+conf.BlockSize(8);<br>
+conf.StringEncoding(new MyStringEncoding());</code></td></tr></table>
+<br>
+<br>
+Configuration settings are <b>not</b>&nbsp;stored in db4o database files.&nbsp;Accordingly the same configuration has to be submitted &nbsp;<b>every time</b>&nbsp;an &nbsp;IObjectContainer &nbsp;ObjectServer &nbsp;is opened.&nbsp;<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

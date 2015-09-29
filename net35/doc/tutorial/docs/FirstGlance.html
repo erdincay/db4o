@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="docs.css">
+<!--[if gte IE 5]>
+     <link href="docs_ie.css" rel="stylesheet" type="text/css">
+<![endif]-->
+</head>
+<body><div id="pagecontainer"><table><tr><td width="5">&nbsp;</td><td><a name="FirstGlance"></a><br>
+<a name="outline123"></a><br><h1>1. First Glance</h1>Before diving straight into the first source code samples&nbsp;let's get you familiar with some basics.<br>
+<br>
+<ul>
+<a name="outline124"></a><br><h2>1.1. The db4o engine</h2>The db4o object database engine consists of one single core DLL.&nbsp;This is all that you need to program against.&nbsp;In addition you may want to use client/server library or optional components.&nbsp;The versions&nbsp;supplied with the distribution can be found in /db4o-8.0/bin/.<br>
+<br>
+db4o is available in multiple distributions for Microsoft .NET.&nbsp;One downloadable distribution is for the .NET Framework 3.5&nbsp;and the other is for the .NET Framework 4.0. Be sure to download&nbsp;and use the correct one for your project environment.<br>
+<br>
+<b>/db4o-</b>8.0/bin/net-X.X/Db4objects.Db4o.dll<br>
+is the standard db4o engine for the regular .NET framework. <br>
+<br>
+<b>/db4o-</b>8.0/bin/compact-X.X/Db4objects.Db4o.dll<br>
+is the db4o engine for the compact framework<br>
+<br>
+<b>/db4o-</b>8.0/bin/silverlight-X.X/Db4objects.Db4o.dll<br>
+is the db4o engine for Silverlight<br>
+<br>
+<a name="outline125"></a><br><h2>1.2. Installation</h2>To use db4o in a development project, you only need to add one&nbsp;of the above Db4objects.Db4o.dll files to your project references.<br>
+<br>
+<a name="outline126"></a><br><h2>1.3. Object Manager Enterprise installation</h2>Object Manager Enterprise (OME) is an object browser for db4o databases. OME&nbsp;provided with this installation comes as Visual Studio plugin. OME&nbsp;can be installed as part of db4o setup. <br>
+<br>
+Alternatively, if you opt out, you can&nbsp;install it later by running the installation from the shortcut provided in&nbsp;the db4objects Start menu folder.<br>
+If you've downloaded .NET distribution as a zip archive, you will find OME&nbsp;installation in the omn folder of the distribution.<br>
+<br>
+<a name="outline127"></a><br><h2>1.4. API Overview</h2>Do not forget the API documentation while reading through this&nbsp;tutorial. It provides an organized view of the API, looking from a&nbsp;namespace perspective and you may find related functionality to the theme you&nbsp;are currently reading up on.<br>
+<br>
+For starters, the Db4objects.Db4o and Db4objects.Db4o.Query namespaces&nbsp;are all that you need to worry about.<br>
+<br>
+<b>Db4objects.Db4o</b><br>
+<br>
+The Db4objects.Db4o namespace&nbsp;contains most of the functionality you will commonly&nbsp;need when you work with db4o. Two objects of note are&nbsp;Db4objects.Db4o.Db4oEmbedded and Db4objects.Db4o.IObjectContainer.<br>
+<br>
+The Db4oEmbedded is your starting point. Static methods in&nbsp;this class&nbsp;allow you to open a database file. For client/server environment you will need&nbsp;to use Db4objects.Db4o.CS.dll and Db4oClientServer factory class to&nbsp;start a server, or connect to an existing server, but this will be discussed <a href="ClientServer.html#ClientServer">later</a>&nbsp;Factory classes also let you configure the db4o environment before opening a database.<br>
+<br>
+The most important interface, and the one that you will be using 99% of the time is <br>
+IObjectContainer: This is your db4o database.<br>
+- An IObjectContainer can either be a database in single-user mode or&nbsp;a client connection to a db4o server.<br>
+- Every IObjectContainer owns one transaction. All work is transactional.&nbsp;When you open an IObjectContainer, you are in a transaction, when you&nbsp;Commit() or Rollback(), the next transaction is started immediately.<br>
+- Every IObjectContainer maintains it's own references to stored and&nbsp;instantiated objects. In doing so, it manages object identities, and&nbsp;is able to achieve a high level of performance.<br>
+- IObjectContainers are intended to be kept open as long as you work&nbsp;against them. When you close an IObjectContainer, all database references&nbsp;to objects in RAM will be discarded.<br>
+<br>
+<b>Db4objects.Db4o.Ext</b><br>
+<br>
+In case you wonder why you only see very few methods in an IObjectContainer,&nbsp;here is why: The db4o interface is supplied in two steps in two namespaces,&nbsp;Db4objects.Db4o and Db4objects.Db4o.Ext for the following reasons:<br>
+- It's easier to get started, because the important methods are emphasised.<br>
+- It will be easier for other products to copy the basic db4o interface.<br>
+- It is an example of how a lightweight version of db4o could look.<br>
+<br>
+Every IObjectContainer object is also an IExtObjectContainer.&nbsp;You can cast the IObjectContainer to IExtObjectContainer or you can use&nbsp;the .Ext() method to access advanced features.<br>
+<br>
+<b>Db4objects.Db4o.Config</b><br>
+<br>
+The Db4objects.Db4o.Config namespace&nbsp;contains types necessary to configure db4o. The objects and interfaces&nbsp;within are discussed in the <a href="Configuration.html#Configuration">Configuration</a>&nbsp;section.<br>
+<br>
+<b>&nbsp;Db4objects.Db4o.Query</b><br>
+<br>
+The Db4objects.Db4o.Query namespace contains&nbsp;the Predicate class to construct <a href="Query.html#Query">Native Queries</a>. The Native Query&nbsp;interface is the primary db4o querying interface and should be preferred over&nbsp;the Soda Query API. <br>
+<br>
+<b>Db4objects.Db4o.Linq</b><br>
+Another query alternative interface. Combines the benefits of the db4o Native Queries&nbsp;and wide database support.&nbsp;&nbsp;&nbsp;<br>
+<br>
+<br><br><div id="footer"><p align="center">Do you have any questions, suggestions or feedback? Ask your questions in the <a href="http://developer.db4o.com/Forums.aspx" target=_top>db4o forums</a>. Join the <a href="http://developer.db4o.com" target=_top>db4o community</a> for addional resources and news.<br><br><a href="http://www.db4o.com/" target=_top><small>www.db4o.com</small></a></p>.</div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr></table></div></body></html>

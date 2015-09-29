@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>OManager</RootNamespace>
+    <AssemblyName>OMPlus</AssemblyName>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ItemGroup>
+    <Compile Include="BusinessLayer\Common\Common.cs" />
+    <Compile Include="BusinessLayer\Common\Constants.cs" />
+    <Compile Include="BusinessLayer\Config\AssemblyResolver.cs" />
+    <Compile Include="BusinessLayer\Config\Config.cs" />
+    <Compile Include="BusinessLayer\Config\ISearchPath.cs" />
+    <Compile Include="BusinessLayer\Config\PathContainer.cs" />
+    <Compile Include="BusinessLayer\Config\SearchPathImpl.cs" />
+    <Compile Include="BusinessLayer\Login\ConnParams.cs" />
+    <Compile Include="BusinessLayer\Login\FavouriteFolder.cs" />
+    <Compile Include="BusinessLayer\Login\ProxyAuthentication.cs" />
+    <Compile Include="BusinessLayer\Login\RecentQueries.cs" />
+    <Compile Include="BusinessLayer\Login\SearchString.cs" />
+    <Compile Include="BusinessLayer\QueryBuilder\DBBrowsing.cs" />
+    <Compile Include="BusinessLayer\QueryManager\OMQuery.cs" />
+    <Compile Include="BusinessLayer\QueryManager\OMQueryClause.cs" />
+    <Compile Include="BusinessLayer\QueryManager\OMQueryGroup.cs" />
+    <Compile Include="BusinessLayer\UIHelper\dbInteraction.cs" />
+    <Compile Include="BusinessLayer\UIHelper\PagingData.cs" />
+    <Compile Include="DataLayer\Common\DataLayerCommon.cs" />
+    <Compile Include="DataLayer\Connection\db4oClient.cs" />
+    <Compile Include="DataLayer\Connection\DBConnect.cs" />
+    <Compile Include="DataLayer\Connection\ProxyAuthenticator.cs" />
+    <Compile Include="DataLayer\Connection\SaveFavouriteClasses.cs" />
+    <Compile Include="DataLayer\Connection\SaveSearchStrings.cs" />
+    <Compile Include="DataLayer\DataProcessing\ModifyCollections.cs" />
+    <Compile Include="DataLayer\DataProcessing\ModifyObjects.cs" />
+    <Compile Include="DataLayer\DBInfo\DbInformation.cs" />
+    <Compile Include="DataLayer\DemoDBCreation\Car.cs" />
+    <Compile Include="DataLayer\DemoDBCreation\Children.cs" />
+    <Compile Include="DataLayer\DemoDBCreation\DemoDatabaseCreation.cs" />
+    <Compile Include="DataLayer\DemoDBCreation\Pilot.cs" />
+    <Compile Include="DataLayer\Maintanence\db4oBackup.cs" />
+    <Compile Include="DataLayer\PropertyDetails\ClassDetails.cs" />
+    <Compile Include="DataLayer\PropertyDetails\FieldDetails.cs" />
+    <Compile Include="DataLayer\PropertyDetails\ObjectDetails.cs" />
+    <Compile Include="DataLayer\PropertyTable\ClassPropertiesTable.cs" />
+    <Compile Include="DataLayer\PropertyTable\FieldProperties.cs" />
+    <Compile Include="DataLayer\PropertyTable\ObjectPropertiesTable.cs" />
+    <Compile Include="DataLayer\QueryParser\IObjectsetConverter.cs" />
+    <Compile Include="DataLayer\QueryParser\QueryParser.cs" />
+    <Compile Include="DataLayer\QueryParser\RenderHierarchy.cs" />
+    <Compile Include="DataLayer\QueryParser\RunQuery.cs" />
+    <Compile Include="DataLayer\Reflection\IType.cs" />
+    <Compile Include="DataLayer\Reflection\Reflection.cs" />
+    <Compile Include="DataLayer\Reflection\TypeImpl.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Db4objects.Db4o, Version=7.11.110.13589, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Dependencies\Db4objects.Db4o.dll</HintPath>
+    </Reference>
+    <Reference Include="Db4objects.Db4o.CS, Version=7.11.110.13589, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Dependencies\Db4objects.Db4o.CS.dll</HintPath>
+    </Reference>
+    <Reference Include="Db4objects.Db4o.Optional, Version=7.11.110.13589, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Dependencies\Db4objects.Db4o.Optional.dll</HintPath>
+    </Reference>
+    <Reference Include="Db4oUnit.Extensions, Version=7.8.80.12552, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Dependencies\Db4oUnit.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LoggingBlock\LoggingBlock-2005.csproj">
+      <Project>{61BA5368-0C86-43FE-9F65-B37E10D187C3}</Project>
+      <Name>LoggingBlock-2005</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TreeGridView\ExpandableGridView-2005.csproj">
+      <Project>{69F0DBA0-3983-4B0C-9664-C856BAD2537D}</Project>
+      <Name>ExpandableGridView-2005</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\treeview_class.gif" />
+    <None Include="Resources\treeview_collection.gif" />
+    <None Include="Resources\treeview_primitive.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resource.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

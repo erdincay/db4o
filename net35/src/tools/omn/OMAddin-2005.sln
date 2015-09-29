@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpandableGridView-2005", "TreeGridView\ExpandableGridView-2005.csproj", "{69F0DBA0-3983-4B0C-9664-C856BAD2537D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoggingBlock-2005", "LoggingBlock\LoggingBlock-2005.csproj", "{61BA5368-0C86-43FE-9F65-B37E10D187C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMPlus-2005", "OM+\OMPlus-2005.csproj", "{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMControlLibrary-2005", "OmControlLibrary\OMControlLibrary-2005.csproj", "{56758956-B261-405F-9E79-66C97A7CE65D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMAddin-2005", "OMADDIN\OMAddin-2005.csproj", "{564443D9-9690-44A5-805F-DD9CE7A0FBF4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMNPostInstaller-2005", "Installer\OMNPostInstaller\OMNPostInstaller-2005.csproj", "{F357C6A9-6C77-4495-9A42-9B1C578C17EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{69F0DBA0-3983-4B0C-9664-C856BAD2537D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69F0DBA0-3983-4B0C-9664-C856BAD2537D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69F0DBA0-3983-4B0C-9664-C856BAD2537D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69F0DBA0-3983-4B0C-9664-C856BAD2537D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61BA5368-0C86-43FE-9F65-B37E10D187C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61BA5368-0C86-43FE-9F65-B37E10D187C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61BA5368-0C86-43FE-9F65-B37E10D187C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61BA5368-0C86-43FE-9F65-B37E10D187C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F173E7B7-3117-4EE6-8BEC-F33DC4C25749}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56758956-B261-405F-9E79-66C97A7CE65D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56758956-B261-405F-9E79-66C97A7CE65D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56758956-B261-405F-9E79-66C97A7CE65D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56758956-B261-405F-9E79-66C97A7CE65D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{564443D9-9690-44A5-805F-DD9CE7A0FBF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{564443D9-9690-44A5-805F-DD9CE7A0FBF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{564443D9-9690-44A5-805F-DD9CE7A0FBF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{564443D9-9690-44A5-805F-DD9CE7A0FBF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F357C6A9-6C77-4495-9A42-9B1C578C17EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F357C6A9-6C77-4495-9A42-9B1C578C17EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F357C6A9-6C77-4495-9A42-9B1C578C17EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F357C6A9-6C77-4495-9A42-9B1C578C17EF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

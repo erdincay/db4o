@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Usage Pitfalls" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Storing MarshalByRef Objects</title>
+        <link href="../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../index_CSH.html#usage_pitfalls/storing_marshalbyref_objects.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../usage_pitfalls.htm">Usage Pitfalls</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Storing Marshalbyref Objects</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>Storing MarshalByRef Objects</h1>
+        <h2>Problem </h2>
+        <p>MarshalByRef objects from .NET Remoting can not be stored by
+db4o. </p>
+        <h2>Reason</h2>
+        <p>MarshalByRef objects are not really objects. They are proxy
+objects to instances, which live on another machine. There are 2 cases to
+distinguish:</p>
+        <ol>
+            <li value="1">If the
+     object instance is local, then the object is storable without an exception
+     unless a remote client has a lifetime lease on the object instance.</li>
+            <li value="2">If the
+     object instance is remote, then you're actually dealing with a DCOM proxy,
+     which cannot be safely stored in db4o, since the remote object lifetime
+     would expire as soon as the object was garbage collected. </li>
+        </ol>
+        <h2>Solution </h2>
+        <p>1. Use marshal by value technology for the persistent object. In this case the
+object implements ISerializable interface and can be stored by db4o without any
+problems. The object is created on the client and is passed to the server using
+MarshalByRef proxy. </p>
+        <p>2. If using MarshalByRef object is mandatory for you, use
+the following configuration:</p>
+        <pre class="monospace">configuration.Common()
+    .ObjectClass("System.Runtime.Remoting.ServerIdentity, mscorlib")
+    .Translate(new TTransient());
+configuration.Common()
+     .ObjectClass("System.Threading.TimerCallback,mscorlib")
+     .Translate(new TTransient());</pre>
+        <p>The TTransient translator will prevent instances of ServerIdentity and
+TimerCallback from being stored within a db4o database. These classes are
+protected internal classes within the .NET Framework. When retrieving your
+MarshalByRef objects from db4o, you will need to re-marshal them.</p>Note: in many cases using <a href="../client-server.htm">db4o
+client-server</a> version can be a better option for a remote persistence. 
+         
+    <script src="../Resources/Code/jquery.min.js"></script><script src="../Resources/Code/ZeroClipboard.js"></script><script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script><script type="text/javascript" src="../SkinSupport/MadCapBodyEnd.js"></script></body>
+</html>

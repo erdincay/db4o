@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Advanced Features|Type Handling|Static Fields And Enums" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Storing Static Fields</title>
+        <link href="../../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../../index_CSH.html#advanced_topics/type_handling/static_fields_and_enums/static_fields_api.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../../advanced_topics.htm">Advanced Features</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../../type_handling.htm">Type Handling</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../static_fields_and_enums.htm">Static Fields And Enums</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Storing Static Fields</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>Storing Static Fields</h1>
+        <p>By default db4o does not persist static fields. This is not necessary because static values are set for a class, not for an object. However you can set up db4o to store static fields if you want to implement constants or enumeration: <a href="../../../configuration/objectclass/persist_static_fields.htm" target="" title="" alt="" class="MCXref" xrefformat="See &quot;{paratext}&quot;">See "Persist Static Fields"</a></p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">IEmbeddedConfiguration configuration = Db4oEmbedded.NewConfiguration();
+configuration.Common.ObjectClass(<span style="color:Blue;">typeof</span> (Person)).PersistStaticFieldValues();</pre>
+            <div class="codesnippet-meta">ObjectConfigurationExamples.cs: Persist also the static fields
+			<div class="codedownload"><a href="../../../CodeExamples/configuration/objectconfig/Example-configuration-objectconfig-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Dim</span> configuration <span style="color:Blue;">As</span> IEmbeddedConfiguration = Db4oEmbedded.NewConfiguration()
+configuration.Common.ObjectClass(<span style="color:Blue;">GetType</span>(Person)).PersistStaticFieldValues()</pre>
+            <div class="codesnippet-meta">ObjectConfigurationExamples.vb: Persist also the static fields
+			<div class="codedownload"><a href="../../../CodeExamples/configuration/objectconfig/Example-configuration-objectconfig-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>When this setting is enabled, all non-primitive-typed static fields are stored the first time an instance of the class is stored. The values are restored every time a database file is opened afterwards, after the class meta information is loaded for this class (when the class objects are retrieved with a query, for example).</p>
+        <p>Use this option with caution. This option means that static fields are stored in the database. When you change the value of this field, you need to store it explicitly again. Furthermore, db4o will replace the static value at runtime, which can lead to very subtle bugs in your application.</p>
+        <p>This option does not have any effect on primitive types like ints, longs, floats etc.</p>
+        <h2>Enum Class Use case</h2>
+        <p style="font-weight: normal;">One of the use-cases is when you have an enumeration class which you want to store.
+		 For example we have a color class, which also has some static colors.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">sealed</span> <![CDATA[ ]]><span style="color:Blue;">class</span> Color
+{
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">static</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> Color Black = <span style="color:Blue;">new</span> Color(0, 0, 0);
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">static</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> Color White = <span style="color:Blue;">new</span> Color(255, 255, 255);
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">static</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> Color Red = <span style="color:Blue;">new</span> Color(255, 0, 0);
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">static</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> Color Green = <span style="color:Blue;">new</span> Color(0, 255, 0);
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">static</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> Color Blue = <span style="color:Blue;">new</span> Color(0, 0, 255);
+
+    <span style="color:Blue;">private</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> <![CDATA[ ]]><span style="color:Blue;">int</span> red;
+    <span style="color:Blue;">private</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> <![CDATA[ ]]><span style="color:Blue;">int</span> green;
+    <span style="color:Blue;">private</span> <![CDATA[ ]]><span style="color:Blue;">readonly</span> <![CDATA[ ]]><span style="color:Blue;">int</span> blue;
+
+    <span style="color:Blue;">private</span> Color(<span style="color:Blue;">int</span> red, <span style="color:Blue;">int</span> green, <span style="color:Blue;">int</span> blue)
+    {
+        <span style="color:Blue;">this</span>.red = red;
+        <span style="color:Blue;">this</span>.green = green;
+        <span style="color:Blue;">this</span>.blue = blue;
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">int</span> RedValue
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> red; }
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">int</span> GreenValue
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> green; }
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">int</span> BlueValue
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> blue; }
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">bool</span> Equals(Color other)
+    {
+        <span style="color:Blue;">if</span> (ReferenceEquals(<span style="color:Blue;">null</span>, other)) <span style="color:Blue;">return</span> <![CDATA[ ]]><span style="color:Blue;">false</span>;
+        <span style="color:Blue;">if</span> (ReferenceEquals(<span style="color:Blue;">this</span>, other)) <span style="color:Blue;">return</span> <![CDATA[ ]]><span style="color:Blue;">true</span>;
+        <span style="color:Blue;">return</span> other.red == red &amp;&amp; other.green == green &amp;&amp; other.blue == blue;
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">override</span> <![CDATA[ ]]><span style="color:Blue;">bool</span> Equals(<span style="color:Blue;">object</span> obj)
+    {
+        <span style="color:Blue;">if</span> (ReferenceEquals(<span style="color:Blue;">null</span>, obj)) <span style="color:Blue;">return</span> <![CDATA[ ]]><span style="color:Blue;">false</span>;
+        <span style="color:Blue;">if</span> (ReferenceEquals(<span style="color:Blue;">this</span>, obj)) <span style="color:Blue;">return</span> <![CDATA[ ]]><span style="color:Blue;">true</span>;
+        <span style="color:Blue;">if</span> (obj.GetType() != <span style="color:Blue;">typeof</span> (Color)) <span style="color:Blue;">return</span> <![CDATA[ ]]><span style="color:Blue;">false</span>;
+        <span style="color:Blue;">return</span> Equals((Color) obj);
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">override</span> <![CDATA[ ]]><span style="color:Blue;">int</span> GetHashCode()
+    {
+        <span style="color:Blue;">unchecked</span>
+        {
+            <span style="color:Blue;">int</span> result = red;
+            result = (result*397) ^ green;
+            result = (result*397) ^ blue;
+            <span style="color:Blue;">return</span> result;
+        }
+    }
+
+    <span style="color:Blue;">public</span> <![CDATA[ ]]><span style="color:Blue;">override</span> <![CDATA[ ]]><span style="color:Blue;">string</span> ToString()
+    {
+        <span style="color:Blue;">return</span> <![CDATA[ ]]><span style="color:Blue;">string</span>.Format(<span style="color:#A31515;">"Red: {0}, Green: {1}, Blue: {2}"</span>, red, green, blue);
+    }
+}</pre>
+            <div class="codesnippet-meta">Color.cs: Class as enumeration
+			<div class="codedownload"><a href="../../../CodeExamples/strategies/storingstatic/Example-strategies-storingstatic-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">NotInheritable</span> <![CDATA[ ]]><span style="color:Blue;">Class</span> Color
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Shared</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> Black <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">New</span> Color(0, 0, 0)
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Shared</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> White <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">New</span> Color(255, 255, 255)
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Shared</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> Red <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">New</span> Color(255, 0, 0)
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Shared</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> Green <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">New</span> Color(0, 255, 0)
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Shared</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> Blue <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">New</span> Color(0, 0, 255)
+
+    <span style="color:Blue;">Private</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> m_red <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+    <span style="color:Blue;">Private</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> m_green <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+    <span style="color:Blue;">Private</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> m_blue <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+
+    <span style="color:Blue;">Private</span> <![CDATA[ ]]><span style="color:Blue;">Sub</span> <![CDATA[ ]]><span style="color:Blue;">New</span>(<span style="color:Blue;">ByVal</span> red <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>, <span style="color:Blue;">ByVal</span> green <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>, <span style="color:Blue;">ByVal</span> blue <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>)
+        <span style="color:Blue;">Me</span>.m_red = red
+        <span style="color:Blue;">Me</span>.m_green = green
+        <span style="color:Blue;">Me</span>.m_blue = blue
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Sub</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> <![CDATA[ ]]><span style="color:Blue;">Property</span> RedValue() <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+        <span style="color:Blue;">Get</span>
+            <span style="color:Blue;">Return</span> m_red
+        <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Get</span>
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Property</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> <![CDATA[ ]]><span style="color:Blue;">Property</span> GreenValue() <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+        <span style="color:Blue;">Get</span>
+            <span style="color:Blue;">Return</span> m_green
+        <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Get</span>
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Property</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">ReadOnly</span> <![CDATA[ ]]><span style="color:Blue;">Property</span> BlueValue() <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+        <span style="color:Blue;">Get</span>
+            <span style="color:Blue;">Return</span> m_blue
+        <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Get</span>
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Property</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Overloads</span> <![CDATA[ ]]><span style="color:Blue;">Function</span> <![CDATA[ ]]><span style="color:Blue;">Equals</span>(<span style="color:Blue;">ByVal</span> other <span style="color:Blue;">As</span> Color) <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Boolean</span>
+        <span style="color:Blue;">If</span> ReferenceEquals(<span style="color:Blue;">Nothing</span>, other) <span style="color:Blue;">Then</span> <![CDATA[ ]]><span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">False</span>
+        <span style="color:Blue;">If</span> ReferenceEquals(<span style="color:Blue;">Me</span>, other) <span style="color:Blue;">Then</span> <![CDATA[ ]]><span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">True</span>
+        <span style="color:Blue;">Return</span> other.m_red = m_red <span style="color:Blue;">AndAlso</span> other.m_green = m_green <span style="color:Blue;">AndAlso</span> other.m_blue = m_blue
+
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Function</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Overloads</span> <![CDATA[ ]]><span style="color:Blue;">Overrides</span> <![CDATA[ ]]><span style="color:Blue;">Function</span> <![CDATA[ ]]><span style="color:Blue;">Equals</span>(<span style="color:Blue;">ByVal</span> obj <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Object</span>) <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Boolean</span>
+        <span style="color:Blue;">If</span> ReferenceEquals(<span style="color:Blue;">Nothing</span>, obj) <span style="color:Blue;">Then</span> <![CDATA[ ]]><span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">False</span>
+        <span style="color:Blue;">If</span> ReferenceEquals(<span style="color:Blue;">Me</span>, obj) <span style="color:Blue;">Then</span> <![CDATA[ ]]><span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">True</span>
+        <span style="color:Blue;">If</span> <![CDATA[ ]]><span style="color:Blue;">Not</span> <![CDATA[ ]]><span style="color:Blue;">Equals</span>(obj.<span style="color:Blue;">GetType</span>(), <span style="color:Blue;">GetType</span>(Color)) <span style="color:Blue;">Then</span> <![CDATA[ ]]><span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">False</span>
+        <span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">Equals</span>(<span style="color:Blue;">DirectCast</span>(obj, Color))
+
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Function</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Overrides</span> <![CDATA[ ]]><span style="color:Blue;">Function</span> GetHashCode() <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span>
+        <span style="color:Blue;">Dim</span> hashCode <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">Integer</span> = m_red
+        hashCode = (hashCode * 397) <span style="color:Blue;">Xor</span> m_green
+        hashCode = (hashCode * 397) <span style="color:Blue;">Xor</span> m_blue
+        <span style="color:Blue;">Return</span> hashCode
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Function</span>
+
+    <span style="color:Blue;">Public</span> <![CDATA[ ]]><span style="color:Blue;">Overrides</span> <![CDATA[ ]]><span style="color:Blue;">Function</span> ToString() <span style="color:Blue;">As</span> <![CDATA[ ]]><span style="color:Blue;">String</span>
+        <span style="color:Blue;">Return</span> <![CDATA[ ]]><span style="color:Blue;">String</span>.Format(<span style="color:#A31515;">"Red: {0}, Green: {1}, Blue: {2}"</span>, m_red, m_green, m_blue)
+    <span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Function</span>
+<span style="color:Blue;">End</span> <![CDATA[ ]]><span style="color:Blue;">Class</span></pre>
+            <div class="codesnippet-meta">Color.vb: Class as enumeration
+			<div class="codedownload"><a href="../../../CodeExamples/strategies/storingstatic/Example-strategies-storingstatic-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p style="font-weight: normal;">We want to ensure reference equality on colors so that you easily can check for a certain color. But when we load the colors from the database you get new instances and not the same instance as in the static field. This means that comparing the references will fail.    <![CDATA[ ]]></p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Green;">// When you enable persist static field values, you can compare by reference</span>
+<span style="color:Green;">// because db4o stores the static field</span>
+<span style="color:Blue;">if</span> (car.Color == Color.Black)
+{
+    Console.WriteLine(<span style="color:#A31515;">"Black cars are boring"</span>);
+}
+<span style="color:Blue;">else</span> <![CDATA[ ]]><span style="color:Blue;">if</span> (car.Color == Color.Red)
+{
+    Console.WriteLine(<span style="color:#A31515;">"Fire engine?"</span>);
+}</pre>
+            <div class="codesnippet-meta">StoringStaticFields.cs: Compare by reference
+			<div class="codedownload"><a href="../../../CodeExamples/strategies/storingstatic/Example-strategies-storingstatic-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Green;">' When you enable persist static field values, you can compare by reference</span>
+<span style="color:Green;">' because db4o stores the static field</span>
+<span style="color:Blue;">If</span> car.Color <span style="color:Blue;">Is</span> Color.Black <span style="color:Blue;">Then</span>
+    Console.WriteLine(<span style="color:#A31515;">"Black cars are boring"</span>)
+<span style="color:Blue;">ElseIf</span> car.Color <span style="color:Blue;">Is</span> Color.Red <span style="color:Blue;">Then</span>
+    Console.WriteLine(<span style="color:#A31515;">"Fire engine?"</span>)</pre>
+            <div class="codesnippet-meta">StoringStaticFields.vb: Compare by reference
+			<div class="codedownload"><a href="../../../CodeExamples/strategies/storingstatic/Example-strategies-storingstatic-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p style="font-weight: normal;">When you enable the persist static fields option, the static fields are stored. This means that the object referenced in the static fields are loaded from the database and therefore the same instance. And the comparing the references works again.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">IEmbeddedConfiguration configuration = Db4oEmbedded.NewConfiguration();
+configuration.Common.ObjectClass(<span style="color:Blue;">typeof</span> (Color)).PersistStaticFieldValues();</pre>
+            <div class="codesnippet-meta">StoringStaticFields.cs: Enable storing static fields for our color class
+			<div class="codedownload"><a href="../../../CodeExamples/strategies/storingstatic/Example-strategies-storingstatic-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">Dim</span> configuration <span style="color:Blue;">As</span> IEmbeddedConfiguration = Db4oEmbedded.NewConfiguration()
+configuration.Common.ObjectClass(<span style="color:Blue;">GetType</span>(Color)).PersistStaticFieldValues()</pre>
+            <div class="codesnippet-meta">StoringStaticFields.vb: Enable storing static fields for our color class
+			<div class="codedownload"><a href="../../../CodeExamples/strategies/storingstatic/Example-strategies-storingstatic-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <script src="../../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

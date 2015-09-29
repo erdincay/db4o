@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Platform Specific Issues" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>WCF Data Services (aka ADO.NET Data Services)</title>
+        <link href="../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../index_CSH.html#platform_specific_issues/wcf_data_services.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../platform_specific_issues.htm">Platform Specific Issues</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">WCF Data Services (aka ADO.NET Data Services)</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1><a name="kanchor119"></a>WCF Data Services (aka ADO.NET Data Services)</h1>
+        <p>The WCF Data Services allows you to easily expose your data as a web service. db4o supports this framework. Look up the <a href="http://msdn.microsoft.com/en-us/data/bb931106.aspx" target="_blank">MSDN documentation on WCF Data Service</a> for more details about it and its features.</p>
+        <p>The are two things which the data service need. An IQueryable implementation and a IUpdatable implementation. db4o provides both. For this you need to reference the Db4objects.Db4o.Linq.dll and Db4objects.Db4o.Data.Services.dll. The first one contains the LINQ-provider, the second contains the IUpdatable.</p>
+        <h2>Preparing The Persistent Classes </h2>
+        <p>The first thing you need to do is to add a key to your objects. And you need specify at least one key for each object.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">[DataServiceKey(<span style="color:#A31515;">"Email"</span>)]
+<span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> Person
+{
+    <span style="color:Blue;">private</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> name;
+    <span style="color:Blue;">private</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> email;
+
+    <span style="color:Green;">// Note that a default constructor is required for WCF</span>
+    <span style="color:Blue;">public</span> Person()
+    {
+    }
+
+    <span style="color:Blue;">public</span> Person(<span style="color:Blue;">string</span> email, <span style="color:Blue;">string</span> name)
+    {
+        <span style="color:Blue;">this</span>.email = email;
+        <span style="color:Blue;">this</span>.name = name;
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> Name
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> name; }
+        <span style="color:Blue;">set</span> { name = value; }
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> Email
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> email; }
+        <span style="color:Blue;">set</span> { email = value; }
+    }
+
+}</pre>
+            <div class="codesnippet-meta">Person.cs: Add at least one key
+			<div class="codedownload"><a href="../CodeExamples/WCFDataServices/WCFDataServices/Example-WCFDataServices-WCFDataServices-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve">[DataServiceKey(<span style="color:#A31515;">"TeamName"</span>)]
+<span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> Team
+{
+    <span style="color:Blue;">private</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> teamName;
+    <span style="color:Blue;">private</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> motivation;
+    <span style="color:Blue;">private</span> IList&lt;Person&gt; members = <span style="color:Blue;">new</span> List&lt;Person&gt;();
+
+    <span style="color:Blue;">public</span> Team()
+    {
+    }
+
+    <span style="color:Blue;">public</span> Team(<span style="color:Blue;">string</span> teamName)
+    {
+        <span style="color:Blue;">this</span>.teamName = teamName;
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> TeamName
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> teamName; }
+        <span style="color:Blue;">set</span> { teamName = value; }
+    }
+
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">string</span> Motivation
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> motivation; }
+        <span style="color:Blue;">set</span> { motivation = value; }
+    }
+
+    <span style="color:Blue;">public</span> IList&lt;Person&gt; Members
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> members; }
+        <span style="color:Blue;">set</span> { members = value; }
+    }
+}</pre>
+            <div class="codesnippet-meta">Team.cs: The Team has also a key
+			<div class="codedownload"><a href="../CodeExamples/WCFDataServices/WCFDataServices/Example-WCFDataServices-WCFDataServices-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <h2>Create A Context</h2>
+        <p>After that, you can build a data context. For this, inherit from the Db4oDataContext. You need to overwrite the OpenSession() to provide the right object container. A good practice is to use a object container per request. For example you can use the <a href="web/web_isolation.htm">OpenSession-operation</a> for creating a container per request. Take also a look how you can provide a object container for     <![CDATA[ ]]><a href="web/asp.net_request_example.htm">each request</a>.</p>
+        <p>After that, you can add operations and properties you want to expose. Remember to use the IQueryable interface to expose query options to the client.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> TeamDataContext : Db4oDataContext
+{
+    <span style="color:Green;">// Provide access to your data via properties</span>
+    <span style="color:Blue;">public</span> IQueryable&lt;Person&gt; Persons
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> Container.AsQueryable&lt;Person&gt;(); }
+    }
+    <span style="color:Blue;">public</span> IQueryable&lt;Team&gt; Teams
+    {
+        <span style="color:Blue;">get</span> { <span style="color:Blue;">return</span> Container.AsQueryable&lt;Team&gt;(); }
+    }
+
+
+
+    <span style="color:Gray;">///</span><span style="color:Green;"> You need to implement the open-session and return a object container</span>
+    <span style="color:Gray;">///</span><span style="color:Green;"> The best practise is to use a separate object-container per request.</span>
+    <span style="color:Gray;">///</span><span style="color:Green;"> For example use the </span>
+    <span style="color:Gray;">///</span>  <![CDATA[ ]]><span style="color:Gray;">&lt;see cref="IObjectContainer"/&gt;</span><span style="color:Green;">.&lt;see cref="IObjectContainer.Ext"/&gt;.&lt;see cref="IExtObjectContainer.OpenSession"/&gt;</span>
+    <span style="color:Gray;">///</span><span style="color:Green;"> to open session-containers for each request.</span>
+    <span style="color:Blue;">protected</span>  <![CDATA[ ]]><span style="color:Blue;">override</span> IObjectContainer OpenSession()
+    {
+        <span style="color:Blue;">return</span> Db4oEmbedded.NewSession();
+    }
+
+}</pre>
+            <div class="codesnippet-meta">TeamDataContext.cs: An concrete context
+			<div class="codedownload"><a href="../CodeExamples/WCFDataServices/WCFDataServices/Example-WCFDataServices-WCFDataServices-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <h2>Create the Service</h2>
+        <p>The last step is to actually create a service. Visual Studio can assist to do this. Right click on the Project, choose 'Add'-&gt; 'New Item'. Then Choose the 'WCF Data Service'. In older releases it's called 'ADO.NET Data Service'. </p>
+        <p>After that, you can rename the created classes and parameterize it with the previously created context. Then you need to specify which operation are allowed. Read more about how the configure the allowed operation in the <a href="http://msdn.microsoft.com/en-us/data/bb931106.aspx">data service documentation</a>.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">class</span> TeamDataService : DataService&lt;TeamDataContext&gt;
+{
+    <span style="color:Blue;">public</span>  <![CDATA[ ]]><span style="color:Blue;">static</span>  <![CDATA[ ]]><span style="color:Blue;">void</span> InitializeService(DataServiceConfiguration config)
+    {
+        config.SetEntitySetAccessRule(<span style="color:#A31515;">"*"</span>, EntitySetRights.All);
+        config.SetServiceOperationAccessRule(<span style="color:#A31515;">"*"</span>, ServiceOperationRights.All);
+    }
+}</pre>
+            <div class="codesnippet-meta">TeamDataService.svc.cs: Build the concrete service
+			<div class="codedownload"><a href="../CodeExamples/WCFDataServices/WCFDataServices/Example-WCFDataServices-WCFDataServices-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <h2>Consuming The Service</h2>
+        <p>Now you can startup this service and you're ready to consume it. For example you can create a simple console application. There you import the service. Right click on the project choose 'Add Service Reference'. Then point the assistant to the URL of the running web service. After that you can use the service.</p>
+        <div class="codesnippet" MadCap:conditions="Primary.c#">
+            <pre class="prettyprint" xml:space="preserve"><span style="color:Blue;">var</span> serviceURL = <span style="color:Blue;">new</span> Uri(<span style="color:#A31515;">"http://localhost:8080/TeamDataService.svc"</span>);    
+<span style="color:Blue;">var</span> serviceContext = <span style="color:Blue;">new</span> TeamDataContext(serviceURL);
+
+<span style="color:Blue;">var</span> teams = serviceContext.Teams;
+<span style="color:Blue;">foreach</span> (<span style="color:Blue;">var</span> team <span style="color:Blue;">in</span> teams)
+{
+    Console.Out.WriteLine(team.TeamName);
+}</pre>
+            <div class="codesnippet-meta">SimpleConsoleClient.cs: Now the service can be used
+			<div class="codedownload"><a href="../CodeExamples/WCFDataServices/ConsoleClient/Example-WCFDataServices-ConsoleClient-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+        </div>
+        <p>&#160;</p>
+        <script src="../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>

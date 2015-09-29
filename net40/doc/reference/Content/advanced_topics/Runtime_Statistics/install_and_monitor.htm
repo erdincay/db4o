@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:MadCap="http://www.madcapsoftware.com/Schemas/MadCap.xsd" MadCap:lastBlockDepth="2" MadCap:lastHeight="120" MadCap:lastWidth="624" MadCap:disableMasterStylesheet="true" MadCap:tocPath="Advanced Features|Runtime Statistics" MadCap:InPreviewMode="false" MadCap:RuntimeFileType="Topic" MadCap:TargetType="WebHelp" MadCap:PathToHelpSystem="../../../" MadCap:HelpSystemFileName="index.xml" MadCap:SearchType="Stem">
+    <head><title>Install and Monitor</title>
+        <link href="../../SkinSupport/MadCap.css" rel="stylesheet" />
+        <link href="../../Resources/Stylesheets/OnlineStyle.css" rel="stylesheet" />
+        <script src="../../SkinSupport/MadCapAll.js" type="text/javascript">
+        </script>
+    </head>
+    <body>
+        <p class="MCWebHelpFramesetLink" style="display: none;"><a href="../../../index_CSH.html#advanced_topics/Runtime_Statistics/install_and_monitor.htm" style="">Open topic with navigation</a>
+        </p>
+        <div class="MCBreadcrumbsBox"><span class="MCBreadcrumbsPrefix">You are here: </span><a class="MCBreadcrumbsLink" href="../../advanced_topics.htm">Advanced Features</a><span class="MCBreadcrumbsDivider"> &gt; </span><a class="MCBreadcrumbsLink" href="../runtime_statistics.htm">Runtime Statistics</a><span class="MCBreadcrumbsDivider"> &gt; </span><span class="MCBreadcrumbs">Install and Monitor</span>
+        </div>
+        <script type="text/javascript">/*<![CDATA[*/
+			document.write("<a href=\"" + location.href +"\">");
+			document.write("Direct Link to this Article");
+			document.write('</a>');/*]]>*/</script>
+        <h1>Install and Monitor</h1>
+        <p MadCap:conditions="Primary..NET">On the .NET platform all runtime statistics are published through the Windows Performance Counters. This means that you can use the regular windows tooling to monitor db4o statistics.</p>
+        <h2>Installing the Monitoring Support</h2>
+        <p>The first thing we need to do is to add the monitoring support to the db4o configuration. The monitoring-support are in<a href="../../dependency_overview.htm"> the optional-<span class="PrimaryArtefact">assembly</span>s</a>. So you need to add those for the monitoring support. </p>
+        <p>Monitoring adds a small overhead to the regular db4o operations. Therefore the monitoring support is distributed across different monitoring options, so that you can add only the options you need.</p>
+        <p>Currently following options are available:</p>
+        <ul>
+            <li value="1"><a href="monitor_queries.htm">Query Monitoring</a>: Monitor how queries behave and perform.</li>
+            <li value="2"><a href="monitor_object_lifecycle.htm">Object Lifecycle Monitoring</a>: Monitor how many objects are stored, deleted and activated.</li>
+            <li value="3"><a href="monitor_io.htm">IO Monitoring</a>: Monitor the IO-operations of db4o.</li>
+            <li value="4"><a href="monitor_network.htm">Network Monitoring</a>: Monitor the network operations of db4o.</li>
+            <li value="5"><a href="monitor_reference_system.htm">Reference System Monitoring</a>: Monitor db4o's reference system.</li>
+        </ul>
+        <div MadCap:conditions="Primary..NET">
+            <h2>Install the Performance Counters</h2>
+            <p>In order to monitor db4o you need to install the db4o performance counters. This needs to be done only once on the machine you want to monitor. Installing the performance counters require Administrator privileges.</p>
+            <p>You can install the performance counter either from you application with an simple method call or with the <a href="../enhancement_tools/enhancement_for_.net/db4otool.htm">db4oTool</a>.</p>
+            <h3>Installing From Your Application</h3>
+            <p>You can install it by simply calling the install-method on the Db4oPerformanceCounters class. Not that your application needs to run with Administrator privileges to successfully install the performance counters.</p>
+            <div class="codesnippet" MadCap:conditions="Primary.c#">
+                <pre class="prettyprint" xml:space="preserve">Db4oPerformanceCounters.Install();</pre>
+                <div class="codesnippet-meta">InstallPerformanceCounters.cs: Install the performance counters
+			<div class="codedownload"><a href="../../CodeExamples/tuning/monitoring/Example-tuning-monitoring-csharp.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <div class="codesnippet" MadCap:conditions="Primary.VB.NET">
+                <pre class="prettyprint" xml:space="preserve">Db4oPerformanceCounters.Install()</pre>
+                <div class="codesnippet-meta">InstallPerformanceCounters.vb: Install the performance counters
+			<div class="codedownload"><a href="../../CodeExamples/tuning/monitoring/Example-tuning-monitoring-vb.zip" class="codedownload" MadCap:conditions="Primary.Online">Download Code</a></div><div class="codedownload copylink-marker" MadCap:conditions="Primary.Online"><a href="#copy">Copy Code</a></div></div>
+            </div>
+            <h3>Installing With Db4oTool</h3>
+            <p>You can install it with the db4oTool. Note that the Db4oTool needs to be executed with Administrator privileges to successfully install the performance counters.</p>
+            <pre class="monospace" xml:space="preserve">Db4oTool.exe -install-performance-counters</pre>
+            <h2>Monitor With Performance Monitor</h2>
+            <p>To monitor the db4o performance counters, you can use the Windows Performance Monitor (perfom.exe). You can start the Performance Monitor by opening the Run-dialog (Windows-Key + R) and enter 'perfmon' and execute.</p>
+            <p>First select which performance counters you want to monitor and for which db4o instance. Click the  'Add'-Botton on the toolbar. There scroll to the db4o-category and select the performance-counter and the instance you want to monitor.</p>
+            <p>
+                <img src="select_perf_counters.png" />
+            </p>
+            <p>After that, you can watch the performance-counters. Read the <a href="http://technet.microsoft.com/en-us/library/bb490957.aspx">Performance Monitor reference</a> for more information.</p>
+            <p>
+                <img src="monitor_perf_counters.png" />
+            </p>
+            <p>&#160;</p>
+        </div>
+        <script src="../../Resources/Code/jquery.min.js">
+        </script>
+        <script src="../../Resources/Code/ZeroClipboard.js">
+        </script>
+        <script type="text/javascript">/* <![CDATA[ */
+window.onload = function(){
+	var pathToFlash = $('html').attr('MadCap:PathToHelpSystem') + 'Content/Resources/Code/ZeroClipboard.swf';
+	ZeroClipboard.setMoviePath(pathToFlash);
+			
+	function bindToClipBord(element,content){
+		var clip = new ZeroClipboard.Client();
+		clip.setText(content);
+		clip.glue(element);
+	};
+		
+	if(location.protocol==='file:'){
+		$('.copylink-marker').remove();
+	} else{
+			$('.copylink-marker').each(function(){
+				var text = $(this).parent().parent().children('.prettyprint').text();
+				$(this).hover(function(){
+					bindToClipBord(this,text);
+				},
+				function(){});
+			});	
+	}		
+};
+                /* ]]> */</script>
+        <script type="text/javascript" src="../../SkinSupport/MadCapBodyEnd.js">
+        </script>
+    </body>
+</html>
